@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface ClienteService {
     List<ClienteResponse> listarClientesActivos();
-    ClienteResponse obtenerPorId(String id);
+    ClienteResponse obtenerPorId(Long id);
     ClienteResponse crearCliente(ClienteRequest request);
     ClienteResponse actualizarCliente(ClienteRequest request);
 }

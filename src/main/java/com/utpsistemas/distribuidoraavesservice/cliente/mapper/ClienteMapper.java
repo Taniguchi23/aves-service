@@ -15,7 +15,7 @@ public class ClienteMapper {
 
     public ClienteResponse clienteToClienteResponse(Cliente cliente) {
         return new ClienteResponse(
-                hashid.encode(cliente.getId()),
+                cliente.getId(),
                 cliente.getNombres(),
                 cliente.getTipoDocumento(),
                 cliente.getNumeroDocumento(),
@@ -30,7 +30,7 @@ public class ClienteMapper {
 
     public Cliente clienteRequestToCliente(ClienteRequest request) {
        Cliente cliente = new Cliente();
-       if (request.id() != null) cliente.setId(hashid.decode(request.id()));
+       if (request.id() != null) cliente.setId(request.id());
        cliente.setNombres(request.nombres());
        if (request.tipoDocumento() != null) cliente.setTipoDocumento(request.tipoDocumento());
        if (request.estado() != null) cliente.setEstado(request.estado());

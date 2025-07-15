@@ -3,7 +3,7 @@ package com.utpsistemas.distribuidoraavesservice.cliente.dto;
 import jakarta.validation.constraints.NotBlank;
 
 public record ClienteRequest (
-        String id,
+        Long id,
         @NotBlank(message = "El nombre es requerido")
         String nombres,
         Integer tipoDocumento,

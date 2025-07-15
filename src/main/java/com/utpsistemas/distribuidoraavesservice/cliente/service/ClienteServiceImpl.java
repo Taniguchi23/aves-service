@@ -42,8 +42,8 @@ public class ClienteServiceImpl implements ClienteService {
     }
 
     @Override
-    public ClienteResponse obtenerPorId(String id) {
-        Cliente cliente = clienteRepository.findById(hashid.decode(id))
+    public ClienteResponse obtenerPorId(Long id) {
+        Cliente cliente = clienteRepository.findById(id)
                 .orElseThrow(() -> new ApiException("Cliente no encontrado", HttpStatus.NOT_FOUND));
 
         return clienteMapper.clienteToClienteResponse(cliente);
@@ -61,7 +61,7 @@ public class ClienteServiceImpl implements ClienteService {
     @Override
     public ClienteResponse actualizarCliente(ClienteRequest request) {
         if (request.id() == null) throw new ApiException("El Id es requerido", HttpStatus.BAD_REQUEST);
-        Cliente cliente = clienteRepository.findById(hashid.decode(request.id()))
+        Cliente cliente = clienteRepository.findById(request.id().longValue())
                 .orElseThrow(() -> new ApiException("Cliente no encontrado",HttpStatus.NOT_FOUND));
 
         if (!cliente.getNumeroDocumento().equals(request.numeroDocumento())) {

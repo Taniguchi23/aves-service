@@ -21,7 +21,7 @@ public class GlobalExceptionHandler {
                 .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .success(false)
                 .message(ex.getMessage())
-                .path(request.getRequestURI())
+//                .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();
 
@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
                 .success(false)
                 .statusCode(HttpStatus.BAD_REQUEST.value())
                 .message(ex.getMessage())
-                .path(request.getRequestURI())
+//                .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();
 
@@ -47,7 +47,7 @@ public class GlobalExceptionHandler {
                 .statusCode(ex.getStatus().value())
                 .success(false)
                 .message(ex.getMessage())
-                .path(request.getRequestURI())
+//                .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();
 
@@ -66,7 +66,7 @@ public class GlobalExceptionHandler {
                 .statusCode(HttpStatus.BAD_REQUEST.value())
                 .message("Error de validación")
                 .data(errors)
-                .path(request.getRequestURI())
+//                .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();
 
@@ -79,7 +79,7 @@ public class GlobalExceptionHandler {
                 .statusCode(HttpStatus.UNAUTHORIZED.value())
                 .success(false)
                 .message("El token ha expirado. Por favor inicia sesión nuevamente.")
-                .path(request.getRequestURI())
+//                .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();
 

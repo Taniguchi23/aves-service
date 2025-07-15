@@ -1,6 +1,7 @@
 package com.utpsistemas.distribuidoraavesservice.auth.helper;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.*;
 import org.springframework.http.HttpStatus;
@@ -12,12 +13,13 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime timestamp;
     private boolean success;
     private int statusCode;
-    private String path;
+//    private String path;
     private String message;
     private T data;
 
@@ -28,7 +30,7 @@ public class ApiResponse<T> {
                 .statusCode(HttpStatus.OK.value())
                 .message(message)
                 .data(data)
-                .path(request.getRequestURI())
+//                .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();
     }
@@ -39,7 +41,7 @@ public class ApiResponse<T> {
                 .statusCode(statusCode)
                 .message(message)
                 .data(data)
-                .path(request.getRequestURI())
+//                .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();
     }
@@ -49,7 +51,7 @@ public class ApiResponse<T> {
                 .success(false)
                 .statusCode(status.value())
                 .message(message)
-                .path(request.getRequestURI())
+//                .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();
     }

@@ -22,7 +22,7 @@ public class ResponseUtil {
                 .statusCode(status.value())
                 .success(false)
                 .message(message)
-                .path(request.getRequestURI())
+//                .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();
 

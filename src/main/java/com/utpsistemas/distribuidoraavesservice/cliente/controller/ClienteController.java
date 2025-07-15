@@ -29,7 +29,7 @@ public class ClienteController {
 
     @PreAuthorize("hasRole('Distribuidor')")
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<ClienteResponse>> obtenerCliente(@PathVariable String id, HttpServletRequest httpRequest) {
+    public ResponseEntity<ApiResponse<ClienteResponse>> obtenerCliente(@PathVariable Long id, HttpServletRequest httpRequest) {
         return ResponseEntity.ok(ApiResponse.success(clienteService.obtenerPorId(id),"Cliente", httpRequest));
     }
 
