@@ -3,8 +3,11 @@ package com.utpsistemas.distribuidoraavesservice.usuario.controller;
 import com.utpsistemas.distribuidoraavesservice.auth.helper.ApiResponse;
 import com.utpsistemas.distribuidoraavesservice.cliente.dto.ClienteRequest;
 import com.utpsistemas.distribuidoraavesservice.cliente.dto.ClienteResponse;
+import com.utpsistemas.distribuidoraavesservice.usuario.dto.AsignacionClienteRequest;
+import com.utpsistemas.distribuidoraavesservice.usuario.dto.AsignacionClienteResponse;
 import com.utpsistemas.distribuidoraavesservice.usuario.dto.UsuarioRequest;
 import com.utpsistemas.distribuidoraavesservice.usuario.dto.UsuarioResponse;
+import com.utpsistemas.distribuidoraavesservice.usuario.service.UsuarioClienteService;
 import com.utpsistemas.distribuidoraavesservice.usuario.service.UsuarioService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +23,9 @@ import java.util.List;
 public class UsuarioController {
     @Autowired
     private UsuarioService usuarioService;
+
+    @Autowired
+    private UsuarioClienteService usuarioClienteService;
 
     @PreAuthorize("hasRole('Distribuidor')")
     @GetMapping
@@ -39,4 +45,9 @@ public class UsuarioController {
         return ResponseEntity.ok(ApiResponse.success(usuarioService.actualizarUsuario(usuarioRequest),"Usuario actualizado", httpRequest));
     }
 
+    @PreAuthorize("hasRole('Distribuidor')")
+    @PostMapping("asignar-cliente")
+    public ResponseEntity<ApiResponse<AsignacionClienteResponse>> actualizarUsuarioCliente(@RequestBody AsignacionClienteRequest asignacionClienteRequest, HttpServletRequest httpRequest) {
+        return ResponseEntity.ok(ApiResponse.success(usuarioClienteService.asignarClientes(asignacionClienteRequest),"Lista de clientes actualizado", httpRequest));
+    }
 }

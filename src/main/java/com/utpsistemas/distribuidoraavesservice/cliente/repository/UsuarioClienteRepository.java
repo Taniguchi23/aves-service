@@ -12,4 +12,6 @@ import java.util.List;
 public interface UsuarioClienteRepository extends JpaRepository<UsuarioCliente, Long> {
     @Query("SELECT uc.cliente FROM UsuarioCliente uc WHERE uc.usuario.id = :usuarioId AND uc.estado = :estado")
     List<Cliente> getClientes(Long usuarioId, Character estado);
+
+    List<UsuarioCliente> findByUsuarioId(Long usuarioId);
 }

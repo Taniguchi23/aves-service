@@ -44,4 +44,6 @@ public class ClienteController {
     public ResponseEntity<ApiResponse<ClienteResponse>> actualizarCliente( @RequestBody ClienteRequest clienteRequest, HttpServletRequest httpRequest) {
         return ResponseEntity.ok(ApiResponse.success(clienteService.actualizarCliente(clienteRequest),"Cliente actualizado", httpRequest));
     }
+
+
 }
