@@ -15,6 +15,7 @@ public class PedidoMapper {
 
     public PedidoResponse toResponse(Pedido pedido) {
         List<DetallePedidoResponse> detalleResponses = pedido.getDetalles().stream()
+                .filter(detalle -> detalle.getEstado() == 1)
                 .map(detalleMapper::toResponse)
                 .toList();
 

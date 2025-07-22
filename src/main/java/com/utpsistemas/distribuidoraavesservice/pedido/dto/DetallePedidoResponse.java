@@ -10,4 +10,5 @@ public record DetallePedidoResponse(
         BigDecimal peso,
         BigDecimal precioXKilo,
         BigDecimal montoEstimado
+
 ) {}
