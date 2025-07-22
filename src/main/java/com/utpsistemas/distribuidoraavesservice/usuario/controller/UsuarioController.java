@@ -1,8 +1,6 @@
 package com.utpsistemas.distribuidoraavesservice.usuario.controller;
 
 import com.utpsistemas.distribuidoraavesservice.auth.helper.ApiResponse;
-import com.utpsistemas.distribuidoraavesservice.cliente.dto.ClienteRequest;
-import com.utpsistemas.distribuidoraavesservice.cliente.dto.ClienteResponse;
 import com.utpsistemas.distribuidoraavesservice.usuario.dto.AsignacionClienteRequest;
 import com.utpsistemas.distribuidoraavesservice.usuario.dto.AsignacionClienteResponse;
 import com.utpsistemas.distribuidoraavesservice.usuario.dto.UsuarioRequest;
