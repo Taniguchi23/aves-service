@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 public record PedidoRequest(
+        Long id,
         @NotNull(message = "El id del cliente es obligatorio")
         Long clienteId,
         String observaciones,
