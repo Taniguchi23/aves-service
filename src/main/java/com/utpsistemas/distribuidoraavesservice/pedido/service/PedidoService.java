@@ -9,5 +9,5 @@ public interface PedidoService {
     PedidoResponse crearPedido(PedidoRequest request);
     List<PedidoResponse> listarPedidosPorCliente(Long clienteId);
     PedidoResponse actualizarPedido(PedidoRequest pedidoRequest);
-
+    boolean validarAsignacionCliente(Long usuarioId, Long clienteId);
 }

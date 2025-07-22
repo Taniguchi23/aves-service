@@ -203,7 +203,8 @@ public class PedidoServiceImpl implements PedidoService {
         return pedidoMapper.toResponse(pedidoRepository.save(pedido));
     }
 
-    private boolean validarAsignacionCliente(Long usuarioId, Long clienteId){
+    @Override
+    public boolean validarAsignacionCliente(Long usuarioId, Long clienteId){
         return usuarioClienteRepository.existsByUsuarioIdAndClienteIdAndEstado(usuarioId, clienteId, 'A');
     }
 }
