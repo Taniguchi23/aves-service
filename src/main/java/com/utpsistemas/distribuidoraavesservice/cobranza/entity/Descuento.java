@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "descuentos")
 @Setter
@@ -21,6 +23,11 @@ public class Descuento {
     @ManyToOne(optional = false)
     @JoinColumn(name = "cobranza_id")
     private Cobranza cobranza;
+
+    @Column(nullable = false)
+    private BigDecimal monto;
+
+    private String motivo;
 
     private Character estado;
 }

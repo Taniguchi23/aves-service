@@ -5,4 +5,5 @@ import com.utpsistemas.distribuidoraavesservice.cobranza.dto.CobranzaResponse;
 
 public interface CobranzaService {
     CobranzaResponse crearCobranza(CobranzaRequest request);
+    CobranzaResponse refrescarCobranza(CobranzaRequest request);
 }
