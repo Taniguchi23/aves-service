@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -68,8 +69,7 @@ public class PedidoServiceImpl implements PedidoService {
         pedido.setUsuario(usuario);
         pedido.setObservaciones(request.observaciones());
         pedido.setEstado("Pendiente");
-        pedido.setFechaCreacion(LocalDate.now());
-        pedido.setHoraCreacion(LocalTime.now());
+        pedido.setFechaCreacion(LocalDateTime.now());
 
         List<DetallePedido> detalles = new ArrayList<>();
 

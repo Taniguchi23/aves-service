@@ -21,25 +21,25 @@ public class ClienteController {
     @Autowired
     private ClienteService clienteService;
 
-    @PreAuthorize("hasRole('Distribuidor')")
+    @PreAuthorize("hasRole('Vendedor')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<ClienteResponse>>> listarClientes( HttpServletRequest httpRequest) {
         return ResponseEntity.ok(ApiResponse.success(clienteService.listarClientesActivos(),"Lista de clientes", httpRequest));
     }
 
-    @PreAuthorize("hasRole('Distribuidor')")
+    @PreAuthorize("hasRole('Vendedor')")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<ClienteResponse>> obtenerCliente(@PathVariable Long id, HttpServletRequest httpRequest) {
         return ResponseEntity.ok(ApiResponse.success(clienteService.obtenerPorId(id),"Cliente", httpRequest));
     }
 
-    @PreAuthorize("hasRole('Distribuidor')")
+    @PreAuthorize("hasRole('Vendedor')")
     @PostMapping
     public ResponseEntity<ApiResponse<ClienteResponse>> crearCliente(@RequestBody ClienteRequest clienteRequest, HttpServletRequest httpRequest) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(clienteService.crearCliente(clienteRequest),"Cliente creado exitosamente", httpRequest));
     }
 
-    @PreAuthorize("hasRole('Distribuidor')")
+    @PreAuthorize("hasRole('Vendedor')")
     @PutMapping()
     public ResponseEntity<ApiResponse<ClienteResponse>> actualizarCliente( @RequestBody ClienteRequest clienteRequest, HttpServletRequest httpRequest) {
         return ResponseEntity.ok(ApiResponse.success(clienteService.actualizarCliente(clienteRequest),"Cliente actualizado", httpRequest));

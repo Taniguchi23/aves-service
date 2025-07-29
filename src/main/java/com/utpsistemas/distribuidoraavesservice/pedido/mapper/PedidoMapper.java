@@ -22,7 +22,6 @@ public class PedidoMapper {
         return new PedidoResponse(
                 pedido.getId(),
                 pedido.getFechaCreacion(),
-                pedido.getHoraCreacion(),
                 pedido.getObservaciones(),
                 pedido.getEstado(),
                 pedido.getCliente().getId(),
