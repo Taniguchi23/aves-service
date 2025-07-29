@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "pago")
@@ -24,12 +25,22 @@ public class Pago {
     @JoinColumn(name = "cobranza_id")
     private Cobranza cobranza;
 
-    @Column(name = "monto_cobrado", nullable = false)
-    private BigDecimal montoCobrado;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "tipo_pago_id")
+    private TipoPago tipoPago;
 
-    private String forma;
-    private String observacion;
+    @ManyToOne
+    @JoinColumn(name = "forma_pago_id")
+    private FormaPago formaPago; // solo aplica si tipo = INGRESO
 
     @Column(nullable = false)
-    private Character estado;
+    private BigDecimal monto;
+
+    private String motivo;
+
+    @Column(nullable = false, length = 1)
+    private Character estado = 'A'; // 'A' = Activo, 'I' = Inactivo
+
+    @Column(nullable = false)
+    private LocalDate fecha;
 }
