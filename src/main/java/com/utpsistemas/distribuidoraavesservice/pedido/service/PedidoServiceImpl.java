@@ -4,18 +4,29 @@ import com.utpsistemas.distribuidoraavesservice.auth.entity.Usuario;
 import com.utpsistemas.distribuidoraavesservice.auth.exception.ApiException;
 import com.utpsistemas.distribuidoraavesservice.auth.repository.UsuarioRepository;
 import com.utpsistemas.distribuidoraavesservice.auth.security.CustomUserDetails;
+import com.utpsistemas.distribuidoraavesservice.cliente.dto.ClienteMiniDTO;
 import com.utpsistemas.distribuidoraavesservice.cliente.entity.Cliente;
 import com.utpsistemas.distribuidoraavesservice.cliente.repository.ClienteRepository;
 import com.utpsistemas.distribuidoraavesservice.cliente.repository.UsuarioClienteRepository;
-import com.utpsistemas.distribuidoraavesservice.pedido.dto.DetallePedidoRequest;
-import com.utpsistemas.distribuidoraavesservice.pedido.dto.PedidoRequest;
-import com.utpsistemas.distribuidoraavesservice.pedido.dto.PedidoResponse;
+import com.utpsistemas.distribuidoraavesservice.cobranza.dto.CobranzaDTO;
+import com.utpsistemas.distribuidoraavesservice.cobranza.dto.CobranzaResponse;
+import com.utpsistemas.distribuidoraavesservice.cobranza.dto.CobranzaResumenDTO;
+import com.utpsistemas.distribuidoraavesservice.cobranza.entity.Cobranza;
+import com.utpsistemas.distribuidoraavesservice.cobranza.repository.CobranzaRepository;
+import com.utpsistemas.distribuidoraavesservice.cobranza.repository.PagoRepository;
+import com.utpsistemas.distribuidoraavesservice.estado.dto.EstadoDTO;
+import com.utpsistemas.distribuidoraavesservice.estado.dto.EstadoResponse;
+import com.utpsistemas.distribuidoraavesservice.estado.entity.Estado;
+import com.utpsistemas.distribuidoraavesservice.estado.repository.EstadoRepository;
+import com.utpsistemas.distribuidoraavesservice.pedido.dto.*;
 import com.utpsistemas.distribuidoraavesservice.pedido.entity.DetallePedido;
 import com.utpsistemas.distribuidoraavesservice.pedido.entity.Pedido;
+import com.utpsistemas.distribuidoraavesservice.pedido.mapper.DetallePedidoMapper;
 import com.utpsistemas.distribuidoraavesservice.pedido.mapper.PedidoMapper;
 import com.utpsistemas.distribuidoraavesservice.pedido.repository.PedidoRepository;
 import com.utpsistemas.distribuidoraavesservice.tipoaves.entity.TipoAve;
 import com.utpsistemas.distribuidoraavesservice.tipoaves.repository.TipoAveRepository;
+import com.utpsistemas.distribuidoraavesservice.usuario.dto.UsuarioMiniDTO;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,10 +38,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class PedidoServiceImpl implements PedidoService {
@@ -52,6 +62,17 @@ public class PedidoServiceImpl implements PedidoService {
     @Autowired
     private UsuarioClienteRepository usuarioClienteRepository;
 
+    @Autowired
+    private EstadoRepository estadoRepository;
+
+    @Autowired
+    private CobranzaRepository cobranzaRepository;
+
+    @Autowired
+    private PagoRepository pagoRepository;
+    @Autowired
+    private DetallePedidoMapper detallePedidoMapper;
+
     @Transactional
     @Override
     public PedidoResponse crearPedido(PedidoRequest request) {
@@ -64,11 +85,15 @@ public class PedidoServiceImpl implements PedidoService {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ApiException("Usuario no encontrado con ID: " + usuarioId,HttpStatus.CONFLICT));
 
+
+        Estado estado = estadoRepository.findById(1L)
+                .orElseThrow(() -> new ApiException("Estado no encontrado", HttpStatus.NOT_FOUND));
+
         Pedido pedido = new Pedido();
         pedido.setCliente(cliente);
         pedido.setUsuario(usuario);
         pedido.setObservaciones(request.observaciones());
-        pedido.setEstado("Pendiente");
+        pedido.setEstado(estado);
         pedido.setFechaCreacion(LocalDateTime.now());
 
         List<DetallePedido> detalles = new ArrayList<>();
@@ -97,33 +122,82 @@ public class PedidoServiceImpl implements PedidoService {
         pedido.setDetalles(detalles);
 
         Pedido guardado = pedidoRepository.save(pedido);
-        return pedidoMapper.toResponse(guardado);
+        return pedidoMapper.toResponse(guardado,null);
     }
 
-    @Override
-    public List<PedidoResponse> listarPedidosPorCliente(Long clienteId) {
-        Cliente cliente = clienteRepository.findById(clienteId)
-                .orElseThrow(() -> new ApiException("Cliente no encontrado con ID: " + clienteId,HttpStatus.NOT_FOUND));
-
-        CustomUserDetails auth = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    @Transactional()
+    public List<PedidoResponse> listarPedidosAsignadosAlUsuario() {
+        CustomUserDetails auth = (CustomUserDetails) SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
         Long usuarioId = auth.getId();
-        if (validarAsignacionCliente(usuarioId, clienteId)) {
-            List<Pedido> pedidos = pedidoRepository.findByClienteIdAndEstadoIn(clienteId, List.of("Pendiente", "Pesado", "Entregado"));
 
-            pedidos.sort(Comparator.comparingInt(p -> {
-                return switch (p.getEstado()) {
-                    case "Pendiente" -> 0;
-                    case "Pesado"    -> 1;
-                    case "Entregado" -> 2;
-                    default          -> 3;
-                };
-            }));
+        List<Long> clienteIds = usuarioClienteRepository.findClienteIdsActivosByUsuario(usuarioId);
+        if (clienteIds.isEmpty()) return List.of();
 
-            return pedidos.stream().map(pedidoMapper::toResponse).toList();
-        }else {
-            throw new ApiException("No tiene asignado a este cliente", HttpStatus.NOT_FOUND);
+        List<Pedido> pedidos = pedidoRepository.findByCliente_IdIn(clienteIds);
+        if (pedidos.isEmpty()) return List.of();
+
+        // traemos cobranzas + pagos (como ya hacías)
+        List<Long> pedidoIds = pedidos.stream().map(Pedido::getId).toList();
+        List<Cobranza> cobranzas = cobranzaRepository.findByPedidoIds(pedidoIds);
+        Map<Long, Cobranza> cobranzaByPedidoId = cobranzas.stream()
+                .collect(Collectors.toMap(c -> c.getPedido().getId(), Function.identity()));
+
+        List<Long> cobranzaIds = cobranzas.stream().map(Cobranza::getId).toList();
+        Map<Long, BigDecimal> sumPagosByCobranza = new HashMap<>();
+        if (!cobranzaIds.isEmpty()) {
+            for (Object[] row : pagoRepository.sumMontosActivosByCobranzaIds(cobranzaIds)) {
+                Long cId = (Long) row[0];
+                BigDecimal sum = (BigDecimal) row[1];
+                sumPagosByCobranza.put(cId, sum != null ? sum : BigDecimal.ZERO);
+            }
         }
+
+        // mapear pedidos
+        List<PedidoResponse> responses = pedidos.stream().map(p -> {
+            CobranzaDTO cobranzaDTO = null;
+            Cobranza c = cobranzaByPedidoId.get(p.getId());
+            if (c != null) {
+                BigDecimal pagado = sumPagosByCobranza.getOrDefault(c.getId(), BigDecimal.ZERO);
+                BigDecimal total = c.getMontoTotal() != null ? c.getMontoTotal() : BigDecimal.ZERO;
+                BigDecimal saldo = total.subtract(pagado);
+
+                cobranzaDTO = new CobranzaDTO(
+                        c.getId(),
+                        c.getEstado(),
+                        total,
+                        pagado,
+                        saldo
+                );
+            }
+
+            return pedidoMapper.toResponse(p, cobranzaDTO);
+        }).toList();
+
+        // ordenar como ya lo tenías
+        Map<String, Integer> ordenEstados = Map.of(
+                "REGISTRADO", 0,
+                "PENDIENTE", 1,
+                "EN_COBRANZA", 2,
+                "PARCIAL", 3,
+                "COMPLETADO", 4,
+                "ANULADO", 5
+        );
+
+        Comparator<PedidoResponse> cmp = Comparator
+                .comparingInt((PedidoResponse x) ->
+                        ordenEstados.getOrDefault(
+                                (x.estado() != null && x.estado().nombre() != null)
+                                        ? x.estado().nombre().toUpperCase()
+                                        : "",
+                                Integer.MAX_VALUE))
+                .thenComparing(PedidoResponse::fechaCreacion,
+                        Comparator.nullsLast(Comparator.reverseOrder()));
+
+        return responses.stream().sorted(cmp).toList();
     }
+
+
 
     @Transactional
     @Override
@@ -132,7 +206,8 @@ public class PedidoServiceImpl implements PedidoService {
             throw new ApiException("El ID del pedido es obligatorio para actualizar.", HttpStatus.BAD_REQUEST);
         }
 
-        CustomUserDetails user = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        CustomUserDetails user = (CustomUserDetails) SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
         Long usuarioId = user.getId();
 
         Pedido pedido = pedidoRepository.findById(pedidoRequest.id())
@@ -142,12 +217,11 @@ public class PedidoServiceImpl implements PedidoService {
             throw new ApiException("No tiene asignado este cliente", HttpStatus.NOT_FOUND);
         }
 
-        if (pedido.getEstado().equals("Entregado") || pedido.getEstado().equals("Anulado")) {
-            throw new ApiException("No se puede modificar un pedido entregado o anulado", HttpStatus.CONFLICT);
+        if ("Completado".equalsIgnoreCase(pedido.getEstado().getNombre()) || "Anulado".equalsIgnoreCase(pedido.getEstado().getNombre())) {
+            throw new ApiException("No se puede modificar un pedido completado o anulado", HttpStatus.CONFLICT);
         }
 
         pedido.setObservaciones(pedidoRequest.observaciones());
-        pedido.setEstado("Pendiente");
 
         List<DetallePedido> detallesActuales = pedido.getDetalles(); // existentes
         List<DetallePedido> nuevosDetalles = new ArrayList<>();
@@ -174,7 +248,13 @@ public class PedidoServiceImpl implements PedidoService {
                 existente.setCantidadPollo(d.cantidad());
                 existente.setPeso(peso);
                 existente.setPrecioXKilo(precio);
-                existente.setMontoEstimado(peso.multiply(precio));
+
+                // Recalcular montoEstimado SIEMPRE a partir de peso * precio
+                BigDecimal montoEstimado = (peso != null && precio != null)
+                        ? peso.multiply(precio)
+                        : BigDecimal.ZERO;
+                existente.setMontoEstimado(montoEstimado);
+
                 existente.setEstado(1);
                 nuevosDetalles.add(existente);
             } else {
@@ -184,12 +264,18 @@ public class PedidoServiceImpl implements PedidoService {
                 nuevo.setCantidadPollo(d.cantidad());
                 nuevo.setPeso(peso);
                 nuevo.setPrecioXKilo(precio);
-                nuevo.setMontoEstimado(peso.multiply(precio));
+
+                BigDecimal montoEstimado = (peso != null && precio != null)
+                        ? peso.multiply(precio)
+                        : BigDecimal.ZERO;
+                nuevo.setMontoEstimado(montoEstimado);
+
                 nuevo.setEstado(1);
                 nuevosDetalles.add(nuevo);
             }
         }
 
+        // Marcar como inactivos los que no vinieron
         for (DetallePedido actual : detallesActuales) {
             if (actual.getId() != null && !idsRecibidos.contains(actual.getId())) {
                 actual.setEstado(0);
@@ -199,8 +285,56 @@ public class PedidoServiceImpl implements PedidoService {
 
         pedido.setDetalles(nuevosDetalles);
 
+        // === Reglas de negocio post-procesamiento ===
 
-        return pedidoMapper.toResponse(pedidoRepository.save(pedido));
+        // Suma del monto estimado SOLO de detalles activos
+//        BigDecimal totalEstimado = nuevosDetalles.stream()
+//                .filter(dp -> dp.getEstado() != null && dp.getEstado() == 1)
+//                .map(DetallePedido::getMontoEstimado)
+//                .filter(Objects::nonNull)
+//                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+//        pedido.(totalEstimado);
+
+        // ¿Todos los detalles activos tienen peso y precio > 0?
+        boolean todosCompletos = nuevosDetalles.stream()
+                .filter(dp -> dp.getEstado() != null && dp.getEstado() == 1)
+                .allMatch(dp ->
+                        dp.getPeso() != null && dp.getPeso().compareTo(BigDecimal.ZERO) > 0 &&
+                                dp.getPrecioXKilo() != null && dp.getPrecioXKilo().compareTo(BigDecimal.ZERO) > 0
+                );
+
+        // Si todos completos y el pedido está en "Pendiente", cambiar a "Registrado"
+        if (todosCompletos && "Pendiente".equalsIgnoreCase(pedido.getEstado().getNombre())) {
+            Estado registrado = estadoRepository.findByNombreIgnoreCase("Registrado")
+                    .orElseThrow(() -> new ApiException("Estado 'Registrado' no configurado", HttpStatus.CONFLICT));
+            pedido.setEstado(registrado);
+        }
+
+        Pedido guardado = pedidoRepository.save(pedido);
+
+        CobranzaDTO cobranzaDTO = null;
+        Optional<Cobranza> cobranzaOpt = cobranzaRepository.findByPedidoId(guardado.getId());
+        if (cobranzaOpt.isPresent()) {
+            Cobranza c = cobranzaOpt.get();
+
+            // Sumar pagos activos
+            BigDecimal pagado = pagoRepository.sumMontosActivosByCobranzaId(c.getId());
+            if (pagado == null) pagado = BigDecimal.ZERO;
+
+            BigDecimal total = c.getMontoTotal() != null ? c.getMontoTotal() : BigDecimal.ZERO;
+            BigDecimal saldo = total.subtract(pagado);
+
+            cobranzaDTO = new CobranzaDTO(
+                    c.getId(),
+                    c.getEstado(),
+                    total,
+                    pagado,
+                    saldo
+            );
+        }
+        return pedidoMapper.toResponse(guardado, cobranzaDTO);
+
     }
 
     @Override

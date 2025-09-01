@@ -5,6 +5,7 @@ import com.utpsistemas.distribuidoraavesservice.auth.entity.Usuario;
 import com.utpsistemas.distribuidoraavesservice.cliente.dto.ClienteRequest;
 import com.utpsistemas.distribuidoraavesservice.cliente.dto.ClienteResponse;
 import com.utpsistemas.distribuidoraavesservice.cliente.entity.Cliente;
+import com.utpsistemas.distribuidoraavesservice.usuario.dto.UsuarioProfile;
 import com.utpsistemas.distribuidoraavesservice.usuario.dto.UsuarioRequest;
 import com.utpsistemas.distribuidoraavesservice.usuario.dto.UsuarioResponse;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,15 @@ public class UsuarioMapper {
                 usuario.getEmail(),
                 usuario.getEstado(),
                 roles
+        );
+    }
+
+    public static UsuarioProfile usuarioToProfile(Usuario usuario){
+        return new UsuarioProfile(
+                usuario.getId(),
+                usuario.getNombres(),
+                usuario.getEmail(),
+                usuario.getEstado()
         );
     }
 

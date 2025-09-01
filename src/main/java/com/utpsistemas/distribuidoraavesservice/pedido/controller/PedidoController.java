@@ -1,6 +1,7 @@
 package com.utpsistemas.distribuidoraavesservice.pedido.controller;
 
 import com.utpsistemas.distribuidoraavesservice.auth.helper.ApiResponse;
+import com.utpsistemas.distribuidoraavesservice.pedido.dto.PedidoListItemDTO;
 import com.utpsistemas.distribuidoraavesservice.pedido.dto.PedidoRequest;
 import com.utpsistemas.distribuidoraavesservice.pedido.dto.PedidoResponse;
 import com.utpsistemas.distribuidoraavesservice.pedido.service.PedidoService;
@@ -26,9 +27,9 @@ public class PedidoController {
     }
 
     @PreAuthorize("hasRole('Vendedor')")
-    @GetMapping("{id}")
-    public ResponseEntity<ApiResponse<List<PedidoResponse>>> listarPedidosPorCliente(@PathVariable Long id, HttpServletRequest httpStatus){
-        return ResponseEntity.ok(ApiResponse.success(pedidoService.listarPedidosPorCliente(id),"Pedido listado", httpStatus));
+    @GetMapping()
+    public ResponseEntity<ApiResponse<List<PedidoResponse>>> listarPedidosPorCliente(HttpServletRequest httpStatus){
+        return ResponseEntity.ok(ApiResponse.success(pedidoService.listarPedidosAsignadosAlUsuario(),"Pedido listado", httpStatus));
     }
 
     @PreAuthorize("hasRole('Vendedor')")

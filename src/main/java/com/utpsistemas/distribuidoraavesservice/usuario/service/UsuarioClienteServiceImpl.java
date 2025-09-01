@@ -26,6 +26,8 @@ public class UsuarioClienteServiceImpl implements UsuarioClienteService {
     private UsuarioClienteRepository usuarioClienteRepository;
 
 
+
+
     @Override
     public AsignacionClienteResponse asignarClientes(AsignacionClienteRequest request) {
         Usuario usuario = usuarioRepository.findById(request.usuarioId())
