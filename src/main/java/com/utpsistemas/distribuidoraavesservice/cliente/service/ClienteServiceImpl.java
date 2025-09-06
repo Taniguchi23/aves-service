@@ -1,11 +1,14 @@
 package com.utpsistemas.distribuidoraavesservice.cliente.service;
 
+import com.utpsistemas.distribuidoraavesservice.auth.entity.Usuario;
 import com.utpsistemas.distribuidoraavesservice.auth.exception.ApiException;
 import com.utpsistemas.distribuidoraavesservice.auth.helper.Hashid;
+import com.utpsistemas.distribuidoraavesservice.auth.repository.UsuarioRepository;
 import com.utpsistemas.distribuidoraavesservice.auth.security.CustomUserDetails;
 import com.utpsistemas.distribuidoraavesservice.cliente.dto.ClienteRequest;
 import com.utpsistemas.distribuidoraavesservice.cliente.dto.ClienteResponse;
 import com.utpsistemas.distribuidoraavesservice.cliente.entity.Cliente;
+import com.utpsistemas.distribuidoraavesservice.cliente.entity.UsuarioCliente;
 import com.utpsistemas.distribuidoraavesservice.cliente.mapper.ClienteMapper;
 import com.utpsistemas.distribuidoraavesservice.cliente.repository.ClienteRepository;
 import com.utpsistemas.distribuidoraavesservice.cliente.repository.UsuarioClienteRepository;
@@ -33,6 +36,9 @@ public class ClienteServiceImpl implements ClienteService {
     @Autowired
     private ClienteMapper clienteMapper;
 
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
     @Override
     public List<ClienteResponse> listarClientesActivos() {
         List<Cliente> listaCliente = getClientes(getUsuarioId(),'A');
@@ -49,13 +55,26 @@ public class ClienteServiceImpl implements ClienteService {
         return clienteMapper.clienteToClienteResponse(cliente);
     }
 
+
     @Override
     public ClienteResponse crearCliente(ClienteRequest request) {
         if (clienteRepository.existsByNumeroDocumento(request.numeroDocumento()))
             throw new ApiException("Ya existe un cliente con ese número de documento", HttpStatus.CONFLICT);
 
+        CustomUserDetails user = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long usuarioId = user.getId();
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
         Cliente cliente = clienteMapper.clienteRequestToCliente(request);
-        return clienteMapper.clienteToClienteResponse(clienteRepository.save(cliente));
+        Cliente clienteNuevo = clienteRepository.save(cliente);
+
+        UsuarioCliente usuarioCliente = new UsuarioCliente();
+        usuarioCliente.setCliente(clienteNuevo);
+        usuarioCliente.setUsuario(usuario);
+        usuarioCliente.setEstado('A');
+        usuarioClienteRepository.save(usuarioCliente);
+
+        return clienteMapper.clienteToClienteResponse(clienteNuevo);
     }
 
     @Override

@@ -7,6 +7,8 @@ import com.utpsistemas.distribuidoraavesservice.auth.entity.Usuario;
 import com.utpsistemas.distribuidoraavesservice.auth.exception.ApiException;
 import com.utpsistemas.distribuidoraavesservice.auth.helper.JwtUtil;
 import com.utpsistemas.distribuidoraavesservice.auth.repository.UsuarioRepository;
+import com.utpsistemas.distribuidoraavesservice.usuario.dto.UsuarioProfile;
+import com.utpsistemas.distribuidoraavesservice.usuario.mapper.UsuarioMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -33,6 +35,9 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private AuthenticationManager authenticationManager;
 
+    @Autowired
+    private UsuarioMapper usuarioMapper;
+
     @Override
     public LoginResponse login(LoginRequest request) {
         Usuario usuario = usuarioRepository.findByEmailAndEstado(request.email(), 'A')
@@ -55,6 +60,7 @@ public class AuthServiceImpl implements AuthService {
 
         String token = jwtUtils.generateToken(usuario.getEmail(), roles);
         log.info("Login exitoso para: {} con roles: {}", usuario.getEmail(), roles);
-        return new LoginResponse(token, roles);
+        UsuarioProfile usuarioProfile = usuarioMapper.usuarioToProfile(usuario);
+        return new LoginResponse(token, roles,usuarioProfile );
     }
 }

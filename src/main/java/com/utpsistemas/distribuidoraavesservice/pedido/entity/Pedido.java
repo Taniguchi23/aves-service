@@ -2,6 +2,7 @@ package com.utpsistemas.distribuidoraavesservice.pedido.entity;
 
 import com.utpsistemas.distribuidoraavesservice.auth.entity.Usuario;
 import com.utpsistemas.distribuidoraavesservice.cliente.entity.Cliente;
+import com.utpsistemas.distribuidoraavesservice.estado.entity.Estado;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -37,7 +38,9 @@ public class Pedido {
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
-    private String estado; // "Pendiente", "Pesado", "Entregado", "Anulado"
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "estado_id", nullable = false)
+    private Estado estado;
 
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL)
     private List<DetallePedido> detalles = new ArrayList<>();

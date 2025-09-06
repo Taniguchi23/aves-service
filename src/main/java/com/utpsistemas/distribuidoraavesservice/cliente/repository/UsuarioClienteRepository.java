@@ -16,4 +16,11 @@ public interface UsuarioClienteRepository extends JpaRepository<UsuarioCliente, 
     List<UsuarioCliente> findByUsuarioId(Long usuarioId);
     boolean existsByUsuarioIdAndClienteIdAndEstado(Long usuarioId, Long clienteId, Character estado);
 
+    @Query("""
+        select uc.cliente.id
+        from UsuarioCliente uc
+        where uc.usuario.id = :usuarioId
+          and uc.estado = 'A'
+    """)
+    List<Long> findClienteIdsActivosByUsuario(Long usuarioId);
 }

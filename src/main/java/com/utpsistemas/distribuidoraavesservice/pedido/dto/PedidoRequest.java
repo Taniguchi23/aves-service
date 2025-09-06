@@ -13,5 +13,6 @@ public record PedidoRequest(
         String observaciones,
         @NotEmpty(message = "Debe incluir al menos un detalle de pedido")
         @Valid
-        List<DetallePedidoRequest> detallePedido
+        List<DetallePedidoRequest> detallePedido,
+        Long estadoId
 ) {}
