@@ -10,10 +10,19 @@ public class TipoAveMapper {
     public TipoAve toEntity(TipoAveRequest request) {
         TipoAve ave = new TipoAve();
         ave.setNombre(request.nombre());
+        ave.setConTripaKg(request.conTripaKg());
+        ave.setSinTripaKg(request.sinTripaKg());
+        ave.setNoAplicaKg(request.noAplicaKg());
         return ave;
     }
 
     public TipoAveResponse toResponse(TipoAve ave) {
-        return new TipoAveResponse(ave.getId(), ave.getNombre());
+        return new TipoAveResponse(
+                ave.getId(),
+                ave.getNombre(),
+                ave.getConTripaKg(),
+                ave.getSinTripaKg(),
+                ave.getNoAplicaKg()
+        );
     }
 }

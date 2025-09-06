@@ -20,7 +20,7 @@ public class Cliente {
     private Long id;
 
     private String nombres;
-    @Column( name = "tipo_documento", columnDefinition = "INTEGER DEFAULT 1")
+//    @Column( name = "tipo_documento", columnDefinition = "INTEGER DEFAULT 1")
     private Integer tipoDocumento = 1;
     @Column( name = "numero_documento", unique = true)
     private String numeroDocumento;

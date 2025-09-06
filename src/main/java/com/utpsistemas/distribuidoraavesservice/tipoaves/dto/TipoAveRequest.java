@@ -5,5 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 public record TipoAveRequest(
         Integer id,
         @NotBlank(message = "El nombre es obligatorio")
-        String nombre
+        String nombre,
+        float conTripaKg,
+        float sinTripaKg,
+        float noAplicaKg
 ) {}

@@ -17,4 +17,7 @@ public class TipoAve {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private String nombre;
+    private float conTripaKg;
+    private float sinTripaKg;
+    private float noAplicaKg;
 }

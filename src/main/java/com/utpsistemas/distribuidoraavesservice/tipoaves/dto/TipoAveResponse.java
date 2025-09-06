@@ -2,5 +2,8 @@ package com.utpsistemas.distribuidoraavesservice.tipoaves.dto;
 
 public record TipoAveResponse(
         Integer id,
-        String nombre
+        String nombre,
+        float conTripaKg,
+        float sinTripaKg,
+        float noAplicaKg
 ) {}
