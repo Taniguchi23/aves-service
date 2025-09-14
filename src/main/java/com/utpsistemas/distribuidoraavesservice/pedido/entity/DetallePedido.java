@@ -33,5 +33,8 @@ public class DetallePedido {
     private BigDecimal precioXKilo;
     private BigDecimal montoEstimado;
 
+    private float mermaKg;
+    private boolean opDirecta;
+
     private Integer estado;
 }

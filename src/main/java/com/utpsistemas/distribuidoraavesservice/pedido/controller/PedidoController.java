@@ -23,19 +23,32 @@ public class PedidoController {
     @PreAuthorize("hasRole('Vendedor')")
     @PostMapping
     public ResponseEntity<ApiResponse<PedidoResponse>> crearPedido(@RequestBody PedidoRequest pedidoRequest , HttpServletRequest httpStatus){
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(pedidoService.crearPedido(pedidoRequest),"Pedido creado", httpStatus));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(
+                        ApiResponse.success(pedidoService.crearPedido(pedidoRequest),
+                        "Pedido creado", httpStatus)
+                );
     }
 
     @PreAuthorize("hasRole('Vendedor')")
     @GetMapping()
     public ResponseEntity<ApiResponse<List<PedidoResponse>>> listarPedidosPorCliente(HttpServletRequest httpStatus){
-        return ResponseEntity.ok(ApiResponse.success(pedidoService.listarPedidosAsignadosAlUsuario(),"Pedido listado", httpStatus));
+        return ResponseEntity.ok(ApiResponse.success(
+                pedidoService.listarPedidosAsignadosAlUsuario(),
+                "Pedido listado", httpStatus
+                )
+        );
     }
 
     @PreAuthorize("hasRole('Vendedor')")
     @PutMapping
     public ResponseEntity<ApiResponse<PedidoResponse>> actualizarPedido(@RequestBody PedidoRequest pedidoRequest, HttpServletRequest httpStatus){
-        return ResponseEntity.ok(ApiResponse.success(pedidoService.actualizarPedido(pedidoRequest),"Pedido actualizado", httpStatus));
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        pedidoService.actualizarPedido(pedidoRequest),
+                        "Pedido actualizado", httpStatus
+                )
+        );
     }
 
 }

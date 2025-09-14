@@ -1,7 +1,6 @@
 package com.utpsistemas.distribuidoraavesservice.pedido.dto;
 
 import java.math.BigDecimal;
-
 public record DetallePedidoResponse(
         Long id,
         Integer tipoAveId,
@@ -9,5 +8,9 @@ public record DetallePedidoResponse(
         Integer cantidad,
         BigDecimal peso,
         BigDecimal precioXKilo,
-        BigDecimal montoEstimado
+        BigDecimal montoEstimado,
+
+        float mermaKg,
+        boolean opDirecta
+
 ) {}
