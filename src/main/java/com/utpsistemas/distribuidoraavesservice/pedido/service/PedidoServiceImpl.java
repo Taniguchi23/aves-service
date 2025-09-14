@@ -311,7 +311,7 @@ public class PedidoServiceImpl implements PedidoService {
                 existente.setTipoMerma(d.tipoMerma());
                 existente.setEstado(1); // Asegurar que el estado sea activo.
                 nuevosDetalles.add(existente);
-            } /*else { // 8.2. Si el detalle NO tiene ID, es una CREACIÓN de un nuevo detalle.
+            } else { // 8.2. Si el detalle NO tiene ID, es una CREACIÓN de un nuevo detalle.
                 DetallePedido nuevo = new DetallePedido();
                 nuevo.setPedido(pedido); // Asociar al pedido principal.
                 nuevo.setTipoAve(tipoAve);
@@ -325,7 +325,7 @@ public class PedidoServiceImpl implements PedidoService {
                 nuevo.setTipoMerma(d.tipoMerma());
                 nuevo.setEstado(1); // Marcar como activo.
                 nuevosDetalles.add(nuevo);
-            }*/
+            }
         }
 
         // 9. Procesar ELIMINACIONES (soft delete).

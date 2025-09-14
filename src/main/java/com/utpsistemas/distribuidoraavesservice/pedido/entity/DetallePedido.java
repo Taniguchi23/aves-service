@@ -1,5 +1,6 @@
 package com.utpsistemas.distribuidoraavesservice.pedido.entity;
 
+import com.utpsistemas.distribuidoraavesservice.pedido.enums.TipoMerma;
 import com.utpsistemas.distribuidoraavesservice.tipoaves.entity.TipoAve;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -37,7 +38,8 @@ public class DetallePedido {
     private boolean opDirecta;
 
     @Column(length = 10)
-    private String tipoMerma;
+    @Enumerated(EnumType.STRING)
+    private TipoMerma tipoMerma;
 
     private Integer estado;
 }
