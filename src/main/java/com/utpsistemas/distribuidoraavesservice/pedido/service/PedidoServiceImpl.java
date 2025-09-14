@@ -91,52 +91,63 @@ public class PedidoServiceImpl implements PedidoService {
                 .orElseThrow(() -> new ApiException("Usuario no encontrado con ID: " + usuarioId,HttpStatus.CONFLICT));
 
 
-        // 4. Obtener el estado inicial para el pedido (por ejemplo, "Pendiente" o "Registrado").
-        // Se usa un ID fijo (1L), asumiendo que es un estado predefinido en el sistema.
-        Estado estado = estadoRepository.findById(1L)
-                .orElseThrow(() -> new ApiException("Estado no encontrado", HttpStatus.NOT_FOUND));
+
 
         // 5. Crear la entidad principal del Pedido y establecer sus propiedades.
         Pedido pedido = new Pedido();
         pedido.setCliente(cliente);
         pedido.setUsuario(usuario);
         pedido.setObservaciones(request.observaciones());
-        pedido.setEstado(estado);
         pedido.setFechaCreacion(LocalDateTime.now()); // Se establece la fecha y hora actual.
+
+        boolean todosCompletos = true;
 
         // 6. Procesar la lista de detalles del pedido que vienen en la solicitud.
         List<DetallePedido> detalles = new ArrayList<>();
         for (DetallePedidoRequest d : request.detallePedido()) {
-            // 6.1. Por cada detalle, buscar el tipo de ave correspondiente.
-            // Si no se encuentra, se lanza una excepción.
             TipoAve tipoAve = tipoAveRepository.findById(d.tipoAveId())
                     .orElseThrow(() -> new ApiException("Tipo de ave no encontrado con ID: " + d.tipoAveId(), HttpStatus.NOT_FOUND));
 
-            // 6.2. Crear una nueva entidad DetallePedido.
             DetallePedido detalle = new DetallePedido();
-            detalle.setPedido(pedido); // Se asocia el detalle con el pedido principal.
+            detalle.setPedido(pedido);
             detalle.setTipoAve(tipoAve);
             detalle.setCantidadPollo(d.cantidad());
             detalle.setMermaKg(d.mermaKg());
             detalle.setOpDirecta(d.opDirecta());
-            // Se asigna el peso y precio, asegurando que no sean nulos (se usa BigDecimal.ZERO como valor por defecto).
             detalle.setPeso(d.peso() != null ? d.peso() : BigDecimal.ZERO);
             detalle.setPrecioXKilo(d.precioXKilo()  != null ? d.precioXKilo() : BigDecimal.ZERO);
             detalle.setTipoMerma(d.tipoMerma());
-            // 6.3. Calcular el monto estimado para este detalle (peso * precio).
+
+            // Calcular monto
             BigDecimal monto = BigDecimal.ZERO;
             if (d.peso() != null && d.precioXKilo() != null) {
                 monto = d.peso().multiply(d.precioXKilo());
             }
             detalle.setMontoEstimado(monto);
-            detalle.setEstado(1); // Se establece el estado del detalle como activo (1).
 
-            // 6.4. Añadir el detalle recién creado a la lista de detalles.
+            // Estado por defecto del detalle
+            detalle.setEstado(1);
+
+            // Validar si el detalle está completo
+            boolean detalleCompleto = d.cantidad() != null
+                    && d.mermaKg() != null
+                    && d.opDirecta() != null
+                    && d.peso() != null
+                    && d.precioXKilo() != null
+                    && d.tipoMerma() != null;
+
+            if (!detalleCompleto) {
+                todosCompletos = false;
+            }
+
             detalles.add(detalle);
         }
-
         // 7. Asociar la lista completa de detalles al pedido.
         pedido.setDetalles(detalles);
+
+        Estado estadoPedido = estadoRepository.findById(todosCompletos ? 2L : 1L)
+                .orElseThrow(() -> new ApiException("Estado no encontrado", HttpStatus.NOT_FOUND));
+        pedido.setEstado(estadoPedido);
 
         // 8. Guardar el pedido en la base de datos. Gracias a la relación en cascada,
         // los detalles también se guardarán automáticamente.
@@ -282,6 +293,9 @@ public class PedidoServiceImpl implements PedidoService {
                 .filter(Objects::nonNull)
                 .toList();
 
+        boolean todosCompletos = true;
+
+
         // 8. Iterar sobre los detalles enviados en la solicitud para procesar creaciones y actualizaciones.
         for (DetallePedidoRequest d : pedidoRequest.detallePedido()) {
             // Cargar entidades relacionadas y preparar datos.
@@ -330,6 +344,17 @@ public class PedidoServiceImpl implements PedidoService {
                 nuevo.setEstado(1); // Marcar como activo.
                 nuevosDetalles.add(nuevo);
             }
+
+            boolean detalleCompleto = d.cantidad() != null
+                    && d.mermaKg() != null
+                    && d.opDirecta() != null
+                    && d.peso() != null
+                    && d.precioXKilo() != null
+                    && d.tipoMerma() != null;
+
+            if (!detalleCompleto) {
+                todosCompletos = false;
+            }
         }
 
         // 9. Procesar ELIMINACIONES (soft delete).
@@ -345,11 +370,16 @@ public class PedidoServiceImpl implements PedidoService {
         // 10. Reemplazar la colección de detalles del pedido con la nueva lista procesada.
         pedido.setDetalles(nuevosDetalles);
 
+
+        Estado estadoPedido = estadoRepository.findById(todosCompletos ? 2L : 1L)
+                .orElseThrow(() -> new ApiException("Estado no encontrado", HttpStatus.NOT_FOUND));
+        pedido.setEstado(estadoPedido);
+
         // === Reglas de negocio post-procesamiento ===
 
         // 11. Verificar si el estado del pedido debe cambiar automáticamente.
         // Se comprueba si todos los detalles ACTIVOS tienen peso y precio.
-        boolean todosCompletos = nuevosDetalles.stream()
+        /* boolean todosCompletos = nuevosDetalles.stream()
                 .filter(dp -> dp.getEstado() != null && dp.getEstado() == 1) // Solo considerar detalles activos.
                 .allMatch(dp ->
                         dp.getPeso() != null && dp.getPeso().compareTo(BigDecimal.ZERO) > 0 &&
@@ -361,7 +391,7 @@ public class PedidoServiceImpl implements PedidoService {
             Estado registrado = estadoRepository.findByNombreIgnoreCase("Registrado")
                     .orElseThrow(() -> new ApiException("Estado 'Registrado' no configurado", HttpStatus.CONFLICT));
             pedido.setEstado(registrado);
-        }
+        }*/
 
         // 12. Guardar el pedido y todos sus detalles (actualizados, nuevos e inactivados) en la BD.
         Pedido guardado = pedidoRepository.save(pedido);
