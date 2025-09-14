@@ -16,6 +16,7 @@ public class DetallePedidoMapper {
                 detalle.getPrecioXKilo(),
                 detalle.getMontoEstimado(),
                 detalle.getMermaKg(),
+                detalle.getTipoMerma(),
                 detalle.isOpDirecta()
         );
     }

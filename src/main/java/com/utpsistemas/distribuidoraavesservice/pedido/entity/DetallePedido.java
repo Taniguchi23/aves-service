@@ -36,5 +36,8 @@ public class DetallePedido {
     private float mermaKg;
     private boolean opDirecta;
 
+    @Column(length = 10)
+    private String tipoMerma;
+
     private Integer estado;
 }
