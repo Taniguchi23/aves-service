@@ -1,11 +1,9 @@
 package com.utpsistemas.distribuidoraavesservice.cobranza.service;
 
-import com.utpsistemas.distribuidoraavesservice.cobranza.dto.CobranzaRefreshRequest;
-import com.utpsistemas.distribuidoraavesservice.cobranza.dto.CobranzaRefreshResponse;
-import com.utpsistemas.distribuidoraavesservice.cobranza.dto.CobranzaRequest;
-import com.utpsistemas.distribuidoraavesservice.cobranza.dto.CobranzaResponse;
+import com.utpsistemas.distribuidoraavesservice.cobranza.dto.*;
 import com.utpsistemas.distribuidoraavesservice.cobranza.entity.FormaPago;
 import com.utpsistemas.distribuidoraavesservice.cobranza.entity.TipoPago;
+import com.utpsistemas.distribuidoraavesservice.pedido.dto.PedidoResponse;
 
 import java.util.List;
 
@@ -17,4 +15,7 @@ public interface CobranzaService {
 
     List<FormaPago> listarFormaPagos();
     List<TipoPago> listarTipoPagos();
+
+    List<CobranzaClienteResumenResponse> listarResumenCobranzasPorUsuario(Long usuarioId);
+
 }

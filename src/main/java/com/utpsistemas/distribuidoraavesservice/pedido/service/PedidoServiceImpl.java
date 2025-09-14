@@ -29,6 +29,7 @@ import com.utpsistemas.distribuidoraavesservice.tipoaves.repository.TipoAveRepos
 import com.utpsistemas.distribuidoraavesservice.usuario.dto.UsuarioMiniDTO;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -43,35 +44,20 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+@AllArgsConstructor
 public class PedidoServiceImpl implements PedidoService {
-    @Autowired
-    private ClienteRepository clienteRepository;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
 
-    @Autowired
-    private TipoAveRepository tipoAveRepository;
-
-    @Autowired
-    private PedidoRepository pedidoRepository;
-
-    @Autowired
-    private PedidoMapper pedidoMapper;
-
-    @Autowired
-    private UsuarioClienteRepository usuarioClienteRepository;
-
-    @Autowired
-    private EstadoRepository estadoRepository;
-
-    @Autowired
-    private CobranzaRepository cobranzaRepository;
-
-    @Autowired
-    private PagoRepository pagoRepository;
-    @Autowired
-    private DetallePedidoMapper detallePedidoMapper;
+    private final ClienteRepository clienteRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final TipoAveRepository tipoAveRepository;
+    private final PedidoRepository pedidoRepository;
+    private final PedidoMapper pedidoMapper;
+    private final UsuarioClienteRepository usuarioClienteRepository;
+    private final EstadoRepository estadoRepository;
+    private final CobranzaRepository cobranzaRepository;
+    private final PagoRepository pagoRepository;
+    private final DetallePedidoMapper detallePedidoMapper;
 
     @Transactional
     @Override
@@ -144,6 +130,31 @@ public class PedidoServiceImpl implements PedidoService {
         }
         // 7. Asociar la lista completa de detalles al pedido.
         pedido.setDetalles(detalles);
+
+        // guardar cantidad y precio total
+        List<DetallePedido> activos = detalles.stream()
+                .filter(dp -> dp.getEstado() != null && dp.getEstado() == 1)
+                .toList();
+
+        BigDecimal importeTotal = activos.stream()
+                .map(dp -> {
+                    BigDecimal peso     = dp.getPeso() != null ? dp.getPeso() : BigDecimal.ZERO;
+                    BigDecimal precio   = dp.getPrecioXKilo() != null ? dp.getPrecioXKilo() : BigDecimal.ZERO;
+                    BigDecimal merma    = dp.getMermaKg() != null ? dp.getMermaKg() : BigDecimal.ZERO;
+                    int cantidad        = dp.getCantidadPollo() != null ? dp.getCantidadPollo() : 0;
+
+                    if (Boolean.TRUE.equals(dp.getOpDirecta())) {
+                        return peso.multiply(precio)
+                                .add(merma.multiply(BigDecimal.valueOf(cantidad)).multiply(precio));
+                    } else {
+                        return peso.multiply(precio);
+                    }
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        pedido.setImporteTotal(importeTotal);
+        pedido.setCantidadDetalles(activos.size());
+
 
         Estado estadoPedido = estadoRepository.findById(todosCompletos ? 2L : 1L)
                 .orElseThrow(() -> new ApiException("Estado no encontrado", HttpStatus.NOT_FOUND));
@@ -371,9 +382,40 @@ public class PedidoServiceImpl implements PedidoService {
         pedido.setDetalles(nuevosDetalles);
 
 
+
+
+        // guardar cantidad y precio total
+        List<DetallePedido> activos = nuevosDetalles.stream()
+                .filter(dp -> dp.getEstado() != null && dp.getEstado() == 1)
+                .toList();
+
+        BigDecimal importeTotal = activos.stream()
+                .map(dp -> {
+                    BigDecimal peso     = dp.getPeso() != null ? dp.getPeso() : BigDecimal.ZERO;
+                    BigDecimal precio   = dp.getPrecioXKilo() != null ? dp.getPrecioXKilo() : BigDecimal.ZERO;
+                    BigDecimal merma    = dp.getMermaKg() != null ? dp.getMermaKg() : BigDecimal.ZERO;
+                    int cantidad        = dp.getCantidadPollo() != null ? dp.getCantidadPollo() : 0;
+
+                    if (Boolean.TRUE.equals(dp.getOpDirecta())) {
+                        return peso.multiply(precio)
+                                .add(merma.multiply(BigDecimal.valueOf(cantidad)).multiply(precio));
+                    } else {
+                        return peso.multiply(precio);
+                    }
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        pedido.setImporteTotal(importeTotal);
+        pedido.setCantidadDetalles(activos.size());
+
+
         Estado estadoPedido = estadoRepository.findById(todosCompletos ? 2L : 1L)
                 .orElseThrow(() -> new ApiException("Estado no encontrado", HttpStatus.NOT_FOUND));
         pedido.setEstado(estadoPedido);
+
+
+
+
 
         // === Reglas de negocio post-procesamiento ===
 

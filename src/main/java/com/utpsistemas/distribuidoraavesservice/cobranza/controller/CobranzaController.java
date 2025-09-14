@@ -6,6 +6,7 @@ import com.utpsistemas.distribuidoraavesservice.cobranza.entity.FormaPago;
 import com.utpsistemas.distribuidoraavesservice.cobranza.entity.TipoPago;
 import com.utpsistemas.distribuidoraavesservice.cobranza.service.CobranzaService;
 import com.utpsistemas.distribuidoraavesservice.cobranza.service.PagoService;
+import com.utpsistemas.distribuidoraavesservice.pedido.dto.PedidoResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -59,4 +60,15 @@ import java.util.List;
     public ResponseEntity<ApiResponse<List<TipoPago>>> listarTipoPago(HttpServletRequest https){
         return ResponseEntity.ok(ApiResponse.success(cobranzaService.listarTipoPagos(),"Listar tipo de pago", https));
     }
+
+    //@PreAuthorize("hasRole('Cobrador') or #usuarioId == authentication.principal.id")
+    @PreAuthorize("hasRole('Cobrador')")
+    @GetMapping("resumen/usuario/{usuarioId}")
+    public ResponseEntity<ApiResponse<List<CobranzaClienteResumenResponse>>> listarResumenPorUsuario(
+            @PathVariable Long usuarioId, HttpServletRequest https) {
+
+        var data = cobranzaService.listarResumenCobranzasPorUsuario(usuarioId);
+        return ResponseEntity.ok(ApiResponse.success(data, "Resumen de cobranzas", https));
+    }
+
 }

@@ -8,8 +8,7 @@ public record DetallePedidoResponse(
         Integer cantidad,
         BigDecimal peso,
         BigDecimal precioXKilo,
-        BigDecimal montoEstimado,
-        Float mermaKg,
+        BigDecimal mermaKg,
         String tipoMerma,
         Boolean opDirecta
 

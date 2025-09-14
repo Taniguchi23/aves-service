@@ -34,7 +34,9 @@ public class DetallePedido {
     private BigDecimal precioXKilo;
     private BigDecimal montoEstimado;
 
-    private Float mermaKg;
+    @Column(name = "merma_kg", precision = 19, scale = 2)
+    private BigDecimal mermaKg;
+
     private Boolean opDirecta;
 
     @Column(length = 10)

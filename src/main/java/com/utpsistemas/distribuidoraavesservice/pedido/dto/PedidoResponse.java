@@ -18,8 +18,9 @@ public record PedidoResponse(
         String observaciones,
         UsuarioMiniDTO usuarioMini,
         ClienteMiniDTO clienteMini,
-        BigDecimal montoTotalEstimado,
         EstadoResponse estado,
+        BigDecimal importeTotal,
+        Integer cantidadDetalles,
         List<DetallePedidoResponse> detalles,
         CobranzaDTO cobranza
 ) {}

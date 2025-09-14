@@ -47,11 +47,8 @@ public class PedidoMapper {
                 .map(detalleMapper::toResponse)
                 .toList();
 
-        // monto total desde los detalles
-        BigDecimal montoTotalEstimado = detalleResponses.stream()
-                .map(DetallePedidoResponse::montoEstimado)
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+
 
         return new PedidoResponse(
                 pedido.getId(),
@@ -59,8 +56,9 @@ public class PedidoMapper {
                 pedido.getObservaciones(),
                 usuarioMini,
                 clienteMini,
-                montoTotalEstimado,
                 estadoResponse,
+                pedido.getImporteTotal(),
+                pedido.getCantidadDetalles(),
                 detalleResponses,
                 cobranzaDTO
         );

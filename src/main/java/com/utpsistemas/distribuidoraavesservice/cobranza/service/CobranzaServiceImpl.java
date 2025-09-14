@@ -2,6 +2,7 @@ package com.utpsistemas.distribuidoraavesservice.cobranza.service;
 
 import com.utpsistemas.distribuidoraavesservice.auth.exception.ApiException;
 import com.utpsistemas.distribuidoraavesservice.auth.security.CustomUserDetails;
+import com.utpsistemas.distribuidoraavesservice.cliente.dto.ClienteMiniDTO;
 import com.utpsistemas.distribuidoraavesservice.cobranza.dto.*;
 import com.utpsistemas.distribuidoraavesservice.cobranza.entity.Cobranza;
 import com.utpsistemas.distribuidoraavesservice.cobranza.entity.FormaPago;
@@ -13,6 +14,7 @@ import com.utpsistemas.distribuidoraavesservice.cobranza.repository.CobranzaRepo
 import com.utpsistemas.distribuidoraavesservice.cobranza.repository.FormaPagoRepository;
 import com.utpsistemas.distribuidoraavesservice.cobranza.repository.PagoRepository;
 import com.utpsistemas.distribuidoraavesservice.cobranza.repository.TipoPagoRepository;
+import com.utpsistemas.distribuidoraavesservice.estado.dto.EstadoResponse;
 import com.utpsistemas.distribuidoraavesservice.pedido.dto.DetallePedidoResponse;
 import com.utpsistemas.distribuidoraavesservice.pedido.entity.DetallePedido;
 import com.utpsistemas.distribuidoraavesservice.pedido.entity.Pedido;
@@ -251,4 +253,35 @@ public class CobranzaServiceImpl implements CobranzaService {
     }
 
 
+    @Override
+    public List<CobranzaClienteResumenResponse> listarResumenCobranzasPorUsuario(Long usuarioId) {
+
+        /*CustomUserDetails auth = (CustomUserDetails) SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
+        Long usrId = auth.getId();
+        if (usrId != usuarioId) {
+            throw new ApiException("El usuario ingresado no corresponde", HttpStatus.CONFLICT);
+        }*/
+
+        List<Pedido> pedidosEnCobranza = pedidoRepository.findByUsuarioIdAndEstadoId(usuarioId, 3);
+
+        return pedidosEnCobranza.stream()
+                .map(p -> {
+                    ClienteMiniDTO clienteMini = new ClienteMiniDTO(
+                            p.getCliente().getId(),
+                            p.getCliente().getNombres()
+                    );
+                    BigDecimal importe = p.getImporteTotal() != null ? p.getImporteTotal() : BigDecimal.ZERO;
+                    Integer cantidad = p.getCantidadDetalles() != null ? p.getCantidadDetalles() : 0;
+
+                    EstadoResponse estado = new EstadoResponse(
+                            p.getEstado().getId(),
+                            p.getEstado().getNombre()
+                    );
+
+
+                    return new CobranzaClienteResumenResponse(p.getId(),  clienteMini, importe, cantidad, estado, p.getFechaCreacion());
+                })
+                .toList();
+    }
 }

@@ -14,7 +14,6 @@ public class DetallePedidoMapper {
                 detalle.getCantidadPollo(),
                 detalle.getPeso(),
                 detalle.getPrecioXKilo(),
-                detalle.getMontoEstimado(),
                 detalle.getMermaKg(),
                 detalle.getTipoMerma(),
                 detalle.getOpDirecta()
