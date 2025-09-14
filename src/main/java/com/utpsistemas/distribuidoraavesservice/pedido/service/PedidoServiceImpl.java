@@ -427,4 +427,26 @@ public class PedidoServiceImpl implements PedidoService {
     public boolean validarAsignacionCliente(Long usuarioId, Long clienteId){
         return usuarioClienteRepository.existsByUsuarioIdAndClienteIdAndEstado(usuarioId, clienteId, 'A');
     }
+
+    @Transactional
+    @Override
+    public PedidoResponse confirmarPedido(Long pedidoId) {
+
+        Pedido pedido = pedidoRepository.findById(pedidoId)
+                .orElseThrow(() -> new ApiException("Pedido no encontrado con ID: " + pedidoId, HttpStatus.NOT_FOUND));
+
+        if (pedido.getEstado() == null || pedido.getEstado().getId() != 2L) {
+            throw new ApiException("Solo se pueden confirmar pedidos en estado 'Por confirmar'", HttpStatus.CONFLICT);
+        }
+
+        Estado confirmado = estadoRepository.findById(3L)
+                .orElseThrow(() -> new ApiException("Estado 'Confirmado' no configurado", HttpStatus.NOT_FOUND));
+
+        pedido.setEstado(confirmado);
+
+        Pedido pedidoSave = pedidoRepository.save(pedido);
+        return pedidoMapper.toResponse(pedidoSave, null);
+    }
+
+
 }

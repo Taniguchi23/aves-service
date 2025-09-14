@@ -51,4 +51,15 @@ public class PedidoController {
         );
     }
 
+    @PutMapping("/{id}/confirmar")
+    public ResponseEntity<ApiResponse<PedidoResponse>> confirmarPedido(
+            @PathVariable Long id,
+            HttpServletRequest request
+    ) {
+        PedidoResponse resp = pedidoService.confirmarPedido(id);
+        return ResponseEntity.ok(
+                ApiResponse.success(resp, "Pedido confirmado (estado = 2)", request)
+        );
+    }
+
 }
