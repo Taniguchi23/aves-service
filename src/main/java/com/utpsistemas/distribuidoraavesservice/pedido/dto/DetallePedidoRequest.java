@@ -14,6 +14,6 @@ public record DetallePedidoRequest(
         BigDecimal precioXKilo,
         @NotNull(message = "Se requiere la merma")
         float mermaKg,
+        String tipoMerma,
         boolean opDirecta
-
 ) {}

@@ -122,7 +122,7 @@ public class PedidoServiceImpl implements PedidoService {
             // Se asigna el peso y precio, asegurando que no sean nulos (se usa BigDecimal.ZERO como valor por defecto).
             detalle.setPeso(d.peso() != null ? d.peso() : BigDecimal.ZERO);
             detalle.setPrecioXKilo(d.precioXKilo()  != null ? d.precioXKilo() : BigDecimal.ZERO);
-
+            detalle.setTipoMerma(d.tipoMerma());
             // 6.3. Calcular el monto estimado para este detalle (peso * precio).
             BigDecimal monto = BigDecimal.ZERO;
             if (d.peso() != null && d.precioXKilo() != null) {
@@ -308,10 +308,10 @@ public class PedidoServiceImpl implements PedidoService {
                 // Recalcular el monto estimado.
                 BigDecimal montoEstimado = peso.multiply(precio);
                 existente.setMontoEstimado(montoEstimado);
-
+                existente.setTipoMerma(d.tipoMerma());
                 existente.setEstado(1); // Asegurar que el estado sea activo.
                 nuevosDetalles.add(existente);
-            } else { // 8.2. Si el detalle NO tiene ID, es una CREACIÓN de un nuevo detalle.
+            } /*else { // 8.2. Si el detalle NO tiene ID, es una CREACIÓN de un nuevo detalle.
                 DetallePedido nuevo = new DetallePedido();
                 nuevo.setPedido(pedido); // Asociar al pedido principal.
                 nuevo.setTipoAve(tipoAve);
@@ -322,10 +322,10 @@ public class PedidoServiceImpl implements PedidoService {
                 // Calcular el monto estimado.
                 BigDecimal montoEstimado = peso.multiply(precio);
                 nuevo.setMontoEstimado(montoEstimado);
-
+                nuevo.setTipoMerma(d.tipoMerma());
                 nuevo.setEstado(1); // Marcar como activo.
                 nuevosDetalles.add(nuevo);
-            }
+            }*/
         }
 
         // 9. Procesar ELIMINACIONES (soft delete).
