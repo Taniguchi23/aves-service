@@ -1,6 +1,6 @@
 package com.utpsistemas.distribuidoraavesservice.pedido.dto;
 
-import com.utpsistemas.distribuidoraavesservice.pedido.enums.TipoMerma;
+
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
@@ -15,6 +15,6 @@ public record DetallePedidoRequest(
         BigDecimal precioXKilo,
         @NotNull(message = "Se requiere la merma")
         float mermaKg,
-        TipoMerma tipoMerma,
+        String tipoMerma,
         boolean opDirecta
 ) {}

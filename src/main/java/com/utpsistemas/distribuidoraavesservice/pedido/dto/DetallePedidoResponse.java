@@ -1,7 +1,5 @@
 package com.utpsistemas.distribuidoraavesservice.pedido.dto;
 
-import com.utpsistemas.distribuidoraavesservice.pedido.enums.TipoMerma;
-
 import java.math.BigDecimal;
 public record DetallePedidoResponse(
         Long id,
@@ -12,7 +10,7 @@ public record DetallePedidoResponse(
         BigDecimal precioXKilo,
         BigDecimal montoEstimado,
         float mermaKg,
-        TipoMerma tipoMerma,
+        String tipoMerma,
         boolean opDirecta
 
 ) {}
