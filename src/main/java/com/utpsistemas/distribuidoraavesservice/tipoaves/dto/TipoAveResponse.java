@@ -1,9 +1,9 @@
 package com.utpsistemas.distribuidoraavesservice.tipoaves.dto;
 
+import java.util.List;
+
 public record TipoAveResponse(
         Integer id,
         String nombre,
-        float conTripaKg,
-        float sinTripaKg,
-        float noAplicaKg
+        List<MermaDTO> mermas
 ) {}
