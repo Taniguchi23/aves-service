@@ -309,7 +309,9 @@ public class PedidoServiceImpl implements PedidoService {
                 BigDecimal montoEstimado = peso.multiply(precio);
                 existente.setMontoEstimado(montoEstimado);
                 existente.setTipoMerma(d.tipoMerma());
-                existente.setEstado(1); // Asegurar que el estado sea activo.
+                existente.setOpDirecta(d.opDirecta());
+                existente.setMermaKg(d.mermaKg());
+                existente.setEstado(1);
                 nuevosDetalles.add(existente);
             } else { // 8.2. Si el detalle NO tiene ID, es una CREACIÓN de un nuevo detalle.
                 DetallePedido nuevo = new DetallePedido();
@@ -323,6 +325,8 @@ public class PedidoServiceImpl implements PedidoService {
                 BigDecimal montoEstimado = peso.multiply(precio);
                 nuevo.setMontoEstimado(montoEstimado);
                 nuevo.setTipoMerma(d.tipoMerma());
+                nuevo.setOpDirecta(d.opDirecta());
+                nuevo.setMermaKg(d.mermaKg());
                 nuevo.setEstado(1); // Marcar como activo.
                 nuevosDetalles.add(nuevo);
             }
