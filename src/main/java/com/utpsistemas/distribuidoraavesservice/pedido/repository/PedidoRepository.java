@@ -1,5 +1,6 @@
 package com.utpsistemas.distribuidoraavesservice.pedido.repository;
 
+import com.utpsistemas.distribuidoraavesservice.cobranza.projection.CobranzaClienteResumenProjection;
 import com.utpsistemas.distribuidoraavesservice.pedido.entity.Pedido;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,12 +19,23 @@ public interface PedidoRepository extends JpaRepository<Pedido,Long> {
     List<Pedido> findByCliente_IdIn(Collection<Long> clienteIds);
 
     @Query("""
-           SELECT p
+           SELECT c.id                       AS clienteId,
+                  c.nombres                  AS clienteNombre,
+                  SUM(COALESCE(p.importeTotal, 0)) AS importeTotal,
+                  COUNT(p)                   AS cantidadPedidos,
+                  e.id                       AS estadoId,
+                  e.nombre                   AS estadoNombre,
+                  MAX(p.fechaCreacion)       AS fechaMax
            FROM Pedido p
-           JOIN FETCH p.cliente c
+           JOIN p.cliente c
+           JOIN p.estado e
            WHERE p.usuario.id = :usuarioId
-             AND p.estado.id = :estadoId
+             AND e.id = :estadoId
+           GROUP BY c.id, c.nombres, e.id, e.nombre
+           ORDER BY c.nombres
            """)
-    List<Pedido> findByUsuarioIdAndEstadoId(@Param("usuarioId") Long usuarioId,
-                                            @Param("estadoId") Integer estadoId);
+    List<CobranzaClienteResumenProjection> resumirPorUsuarioYEstado(@Param("usuarioId") Long usuarioId,
+                                                                    @Param("estadoId") Integer estadoId);
+
+
 }

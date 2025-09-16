@@ -11,7 +11,7 @@ public record CobranzaClienteResumenResponse(
         Long id,
         ClienteMiniDTO cliente,
         BigDecimal importeTotal,
-        Integer cantidadDetalles,
+        Integer cantidadPedidos,
         EstadoResponse estado,
         @JsonFormat(pattern = "dd-MM-yyyy")
         LocalDateTime fecha) {}

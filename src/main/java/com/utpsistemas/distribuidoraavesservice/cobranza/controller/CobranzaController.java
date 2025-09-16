@@ -4,6 +4,7 @@ import com.utpsistemas.distribuidoraavesservice.auth.helper.ApiResponse;
 import com.utpsistemas.distribuidoraavesservice.cobranza.dto.*;
 import com.utpsistemas.distribuidoraavesservice.cobranza.entity.FormaPago;
 import com.utpsistemas.distribuidoraavesservice.cobranza.entity.TipoPago;
+import com.utpsistemas.distribuidoraavesservice.cobranza.projection.CobranzaClienteResumenProjection;
 import com.utpsistemas.distribuidoraavesservice.cobranza.service.CobranzaService;
 import com.utpsistemas.distribuidoraavesservice.cobranza.service.PagoService;
 import com.utpsistemas.distribuidoraavesservice.pedido.dto.PedidoResponse;

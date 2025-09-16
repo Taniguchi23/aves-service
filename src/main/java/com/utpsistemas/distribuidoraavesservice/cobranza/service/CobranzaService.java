@@ -3,6 +3,7 @@ package com.utpsistemas.distribuidoraavesservice.cobranza.service;
 import com.utpsistemas.distribuidoraavesservice.cobranza.dto.*;
 import com.utpsistemas.distribuidoraavesservice.cobranza.entity.FormaPago;
 import com.utpsistemas.distribuidoraavesservice.cobranza.entity.TipoPago;
+import com.utpsistemas.distribuidoraavesservice.cobranza.projection.CobranzaClienteResumenProjection;
 import com.utpsistemas.distribuidoraavesservice.pedido.dto.PedidoResponse;
 
 import java.util.List;

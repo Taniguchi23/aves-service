@@ -10,6 +10,7 @@ import com.utpsistemas.distribuidoraavesservice.cobranza.entity.Pago;
 import com.utpsistemas.distribuidoraavesservice.cobranza.entity.TipoPago;
 import com.utpsistemas.distribuidoraavesservice.cobranza.mapper.CobranzaMapper;
 import com.utpsistemas.distribuidoraavesservice.cobranza.mapper.PagoMapper;
+import com.utpsistemas.distribuidoraavesservice.cobranza.projection.CobranzaClienteResumenProjection;
 import com.utpsistemas.distribuidoraavesservice.cobranza.repository.CobranzaRepository;
 import com.utpsistemas.distribuidoraavesservice.cobranza.repository.FormaPagoRepository;
 import com.utpsistemas.distribuidoraavesservice.cobranza.repository.PagoRepository;
@@ -263,25 +264,18 @@ public class CobranzaServiceImpl implements CobranzaService {
             throw new ApiException("El usuario ingresado no corresponde", HttpStatus.CONFLICT);
         }*/
 
-        List<Pedido> pedidosEnCobranza = pedidoRepository.findByUsuarioIdAndEstadoId(usuarioId, 3);
+        final int ESTADO_COBRANZA = 3;
 
-        return pedidosEnCobranza.stream()
-                .map(p -> {
-                    ClienteMiniDTO clienteMini = new ClienteMiniDTO(
-                            p.getCliente().getId(),
-                            p.getCliente().getNombres()
-                    );
-                    BigDecimal importe = p.getImporteTotal() != null ? p.getImporteTotal() : BigDecimal.ZERO;
-                    Integer cantidad = p.getCantidadDetalles() != null ? p.getCantidadDetalles() : 0;
-
-                    EstadoResponse estado = new EstadoResponse(
-                            p.getEstado().getId(),
-                            p.getEstado().getNombre()
-                    );
-
-
-                    return new CobranzaClienteResumenResponse(p.getId(),  clienteMini, importe, cantidad, estado, p.getFechaCreacion());
-                })
+        var filas = pedidoRepository.resumirPorUsuarioYEstado(usuarioId, ESTADO_COBRANZA);
+        return filas.stream()
+                .map(r -> new CobranzaClienteResumenResponse(
+                        r.getClienteId(),
+                        new ClienteMiniDTO(r.getClienteId(), r.getClienteNombre()),
+                        r.getImporteTotal(),
+                        r.getCantidadPedidos() == null ? 0 : r.getCantidadPedidos().intValue(),
+                        new EstadoResponse(r.getEstadoId(), r.getEstadoNombre()),
+                        r.getFechaMax()
+                ))
                 .toList();
     }
 }
