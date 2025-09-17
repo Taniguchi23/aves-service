@@ -19,9 +19,9 @@ public class TipoAveMapper {
 
     public TipoAveResponse toResponse(TipoAve ave) {
         var mermas = java.util.List.of(
-                new MermaDTO("CT", ave.getConTripaKg()),
-                new MermaDTO("ST", ave.getSinTripaKg()),
-                new MermaDTO("NA", ave.getNoAplicaKg())
+                new MermaDTO("CT", ave.getConTripaKg(), "Con Tripa"),
+                new MermaDTO("ST", ave.getSinTripaKg(), "Sin Tripa"),
+                new MermaDTO("NA", ave.getNoAplicaKg(), "No Aplica")
         );
         return new TipoAveResponse(
                 ave.getId(),
