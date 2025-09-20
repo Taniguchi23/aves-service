@@ -20,23 +20,31 @@ public interface PedidoRepository extends JpaRepository<Pedido,Long> {
     List<Pedido> findByCliente_IdIn(Collection<Long> clienteIds);
 
     @Query("""
-           SELECT c.id                       AS clienteId,
-                  c.nombres                  AS clienteNombre,
-                  SUM(COALESCE(p.importeTotal, 0)) AS importeTotal,
-                  COUNT(p)                   AS cantidadPedidos,
-                  e.id                       AS estadoId,
-                  e.nombre                   AS estadoNombre,
-                  MAX(p.fechaCreacion)       AS fechaMax
-           FROM Pedido p
-           JOIN p.cliente c
-           JOIN p.estado e
-           WHERE p.usuario.id = :usuarioId
-             AND e.id = :estadoId
-           GROUP BY c.id, c.nombres, e.id, e.nombre
-           ORDER BY c.nombres
-           """)
-    List<CobranzaClienteResumenProjection> resumirPorUsuarioYEstado(@Param("usuarioId") Long usuarioId,
-                                                                    @Param("estadoId") Integer estadoId);
+       SELECT c.id                           AS clienteId,
+              c.nombres                      AS clienteNombre,
+              SUM(COALESCE(p.importeTotal, 0)) AS importeTotal,
+              COUNT(p)                       AS cantidadPedidos,
+              e.id                           AS estadoId,
+              e.nombre                       AS estadoNombre,
+              MAX(p.fechaCreacion)           AS fechaMax
+       FROM Pedido p
+       JOIN p.cliente c
+       JOIN p.estado e
+       JOIN UsuarioCliente uc
+            ON uc.cliente = c
+           AND uc.usuario.id = :usuarioId
+           AND (uc.estado IS NULL OR uc.estado = 'A')
+       WHERE e.id IN :estadoIds
+       GROUP BY c.id, c.nombres, e.id, e.nombre
+       ORDER BY c.nombres
+       """)
+    List<CobranzaClienteResumenProjection> resumirPorUsuarioYEstados(
+            @Param("usuarioId") Long usuarioId,
+            @Param("estadoIds") Collection<Integer> estadoIds);
+
+
+
+
 
     @Query("""
     select p.id as pedidoId,

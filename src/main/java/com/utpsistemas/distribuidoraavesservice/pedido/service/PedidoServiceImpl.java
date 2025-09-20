@@ -15,7 +15,7 @@ import com.utpsistemas.distribuidoraavesservice.cobranza.repository.PagoReposito
 import com.utpsistemas.distribuidoraavesservice.estado.entity.Estado;
 import com.utpsistemas.distribuidoraavesservice.estado.repository.EstadoRepository;
 import com.utpsistemas.distribuidoraavesservice.pedido.dto.*;
-import com.utpsistemas.distribuidoraavesservice.pedido.entity.DetallePedido;
+import com.utpsistemas.distribuidoraavesservice.pedido.entity.PedidoDetalle;
 import com.utpsistemas.distribuidoraavesservice.pedido.entity.Pedido;
 import com.utpsistemas.distribuidoraavesservice.pedido.mapper.DetallePedidoMapper;
 import com.utpsistemas.distribuidoraavesservice.pedido.mapper.PedidoMapper;
@@ -31,6 +31,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -71,7 +72,6 @@ public class PedidoServiceImpl implements PedidoService {
 
 
 
-
         // 5. Crear la entidad principal del Pedido y establecer sus propiedades.
         Pedido pedido = new Pedido();
         pedido.setCliente(cliente);
@@ -82,12 +82,12 @@ public class PedidoServiceImpl implements PedidoService {
         boolean todosCompletos = true;
 
         // 6. Procesar la lista de detalles del pedido que vienen en la solicitud.
-        List<DetallePedido> detalles = new ArrayList<>();
+        List<PedidoDetalle> detalles = new ArrayList<>();
         for (DetallePedidoRequest d : request.detallePedido()) {
             TipoAve tipoAve = tipoAveRepository.findById(d.tipoAveId())
                     .orElseThrow(() -> new ApiException("Tipo de ave no encontrado con ID: " + d.tipoAveId(), HttpStatus.NOT_FOUND));
 
-            DetallePedido detalle = new DetallePedido();
+            PedidoDetalle detalle = new PedidoDetalle();
             detalle.setPedido(pedido);
             detalle.setTipoAve(tipoAve);
             detalle.setCantidadPollo(d.cantidad());
@@ -96,6 +96,9 @@ public class PedidoServiceImpl implements PedidoService {
             detalle.setPeso(d.peso() != null ? d.peso() : BigDecimal.ZERO);
             detalle.setPrecioXKilo(d.precioXKilo()  != null ? d.precioXKilo() : BigDecimal.ZERO);
             detalle.setTipoMerma(d.tipoMerma());
+
+            BigDecimal subtotal = calcularSubtotal(detalle);
+            detalle.setImporteSubTotal(subtotal);
 
             // Calcular monto
             BigDecimal monto = BigDecimal.ZERO;
@@ -125,25 +128,14 @@ public class PedidoServiceImpl implements PedidoService {
         pedido.setDetalles(detalles);
 
         // guardar cantidad y precio total
-        List<DetallePedido> activos = detalles.stream()
+        List<PedidoDetalle> activos = detalles.stream()
                 .filter(dp -> dp.getEstado() != null && dp.getEstado() == 1)
                 .toList();
 
         BigDecimal importeTotal = activos.stream()
-                .map(dp -> {
-                    BigDecimal peso     = dp.getPeso() != null ? dp.getPeso() : BigDecimal.ZERO;
-                    BigDecimal precio   = dp.getPrecioXKilo() != null ? dp.getPrecioXKilo() : BigDecimal.ZERO;
-                    BigDecimal merma    = dp.getMermaKg() != null ? dp.getMermaKg() : BigDecimal.ZERO;
-                    int cantidad        = dp.getCantidadPollo() != null ? dp.getCantidadPollo() : 0;
-
-                    if (Boolean.TRUE.equals(dp.getOpDirecta())) {
-                        return peso.multiply(precio)
-                                .add(merma.multiply(BigDecimal.valueOf(cantidad)).multiply(precio));
-                    } else {
-                        return peso.multiply(precio);
-                    }
-                })
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .map(dp -> nvl(dp.getImporteSubTotal()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
 
         pedido.setImporteTotal(importeTotal);
         pedido.setCantidadDetalles(activos.size());
@@ -160,6 +152,26 @@ public class PedidoServiceImpl implements PedidoService {
         // 9. Mapear la entidad Pedido guardada a un DTO de respuesta (PedidoResponse) y retornarlo.
         return pedidoMapper.toResponse(guardado,null);
     }
+
+    private BigDecimal calcularSubtotal(PedidoDetalle dp) {
+        BigDecimal peso   = nvl(dp.getPeso());
+        BigDecimal precio = nvl(dp.getPrecioXKilo());
+        BigDecimal merma  = nvl(dp.getMermaKg());
+        int cantidad      = dp.getCantidadPollo() != null ? dp.getCantidadPollo() : 0;
+
+        BigDecimal base = peso.multiply(precio);
+        if (Boolean.TRUE.equals(dp.getOpDirecta())) {
+            BigDecimal extra = merma.multiply(BigDecimal.valueOf(cantidad)).multiply(precio);
+            base = base.add(extra);
+        }
+        return base.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal nvl(BigDecimal v) {
+        return v != null ? v : BigDecimal.ZERO;
+    }
+
+
 
     @Transactional()
     public List<PedidoResponse> listarPedidosAsignadosAlUsuario() {
@@ -287,8 +299,8 @@ public class PedidoServiceImpl implements PedidoService {
         pedido.setObservaciones(pedidoRequest.observaciones());
 
         // --- Lógica de actualización de detalles (Crear, Actualizar, Eliminar) ---
-        List<DetallePedido> detallesActuales = pedido.getDetalles(); // Detalles existentes en la BD.
-        List<DetallePedido> nuevosDetalles = new ArrayList<>();
+        List<PedidoDetalle> detallesActuales = pedido.getDetalles(); // Detalles existentes en la BD.
+        List<PedidoDetalle> nuevosDetalles = new ArrayList<>();
 
         // 7. Obtener una lista de los IDs de detalles que vienen en la solicitud.
         // Esto servirá para identificar qué detalles existentes fueron eliminados.
@@ -297,64 +309,62 @@ public class PedidoServiceImpl implements PedidoService {
                 .filter(Objects::nonNull)
                 .toList();
 
+
+        Map<Long, PedidoDetalle> detallesPorId = detallesActuales.stream()
+                .collect(Collectors.toMap(PedidoDetalle::getId, Function.identity()));
+        Map<Integer, TipoAve> cacheTipoAve = new HashMap<>();
+
         boolean todosCompletos = true;
 
-
-        // 8. Iterar sobre los detalles enviados en la solicitud para procesar creaciones y actualizaciones.
         for (DetallePedidoRequest d : pedidoRequest.detallePedido()) {
-            // Cargar entidades relacionadas y preparar datos.
-            TipoAve tipoAve = tipoAveRepository.findById(d.tipoAveId())
-                    .orElseThrow(() -> new EntityNotFoundException("Tipo de ave no encontrado con ID: " + d.tipoAveId()));
-            // Asegurar que peso y precio no sean nulos para evitar NullPointerException.
-            BigDecimal peso = d.peso() != null ? d.peso() : BigDecimal.ZERO;
-            BigDecimal precio = d.precioXKilo() != null ? d.precioXKilo() : BigDecimal.ZERO;
 
-            // 8.1. Si el detalle tiene un ID, es una ACTUALIZACIÓN de un detalle existente.
-            if (d.id() != null) {
-                // Buscar el detalle existente en la lista cargada de la BD.
-                DetallePedido existente = detallesActuales.stream()
-                        .filter(dp -> dp.getId().equals(d.id()))
-                        .findFirst()
-                        .orElseThrow(() -> new EntityNotFoundException("Detalle no encontrado con ID: " + d.id()));
-
-                // Actualizar sus propiedades.
-                existente.setTipoAve(tipoAve);
-                existente.setCantidadPollo(d.cantidad());
-                existente.setPeso(peso);
-                existente.setPrecioXKilo(precio);
-
-                // Recalcular el monto estimado.
-                BigDecimal montoEstimado = peso.multiply(precio);
-                existente.setMontoEstimado(montoEstimado);
-                existente.setTipoMerma(d.tipoMerma());
-                existente.setOpDirecta(d.opDirecta());
-                existente.setMermaKg(d.mermaKg());
-                existente.setEstado(1);
-                nuevosDetalles.add(existente);
-            } else { // 8.2. Si el detalle NO tiene ID, es una CREACIÓN de un nuevo detalle.
-                DetallePedido nuevo = new DetallePedido();
-                nuevo.setPedido(pedido); // Asociar al pedido principal.
-                nuevo.setTipoAve(tipoAve);
-                nuevo.setCantidadPollo(d.cantidad());
-                nuevo.setPeso(peso);
-                nuevo.setPrecioXKilo(precio);
-
-                // Calcular el monto estimado.
-                BigDecimal montoEstimado = peso.multiply(precio);
-                nuevo.setMontoEstimado(montoEstimado);
-                nuevo.setTipoMerma(d.tipoMerma());
-                nuevo.setOpDirecta(d.opDirecta());
-                nuevo.setMermaKg(d.mermaKg());
-                nuevo.setEstado(1); // Marcar como activo.
-                nuevosDetalles.add(nuevo);
+            TipoAve tipoAve = cacheTipoAve.get(d.tipoAveId());
+            if (tipoAve == null) {
+                tipoAve = tipoAveRepository.findById(d.tipoAveId())
+                        .orElseThrow(() -> new EntityNotFoundException(
+                                "Tipo de ave no encontrado con ID: " + d.tipoAveId()));
+                cacheTipoAve.put(d.tipoAveId(), tipoAve);
             }
 
-            boolean detalleCompleto = d.cantidad() != null
-                    && d.mermaKg() != null
-                    && d.opDirecta() != null
-                    && d.peso() != null
-                    && d.precioXKilo() != null
-                    && d.tipoMerma() != null;
+            BigDecimal peso = (d.peso() != null) ? d.peso() : BigDecimal.ZERO;
+            BigDecimal precio = (d.precioXKilo() != null) ? d.precioXKilo() : BigDecimal.ZERO;
+
+
+            PedidoDetalle target;
+            if (d.id() != null) {
+                target = detallesPorId.get(d.id());
+                if (target == null) {
+                    throw new EntityNotFoundException("Detalle no encontrado con ID: " + d.id());
+                }
+            } else {
+                target = new PedidoDetalle();
+                target.setPedido(pedido);
+            }
+
+            // Asignaciones comunes
+            target.setTipoAve(tipoAve);
+            target.setCantidadPollo(d.cantidad());
+            target.setPeso(peso);
+            target.setPrecioXKilo(precio);
+            target.setMontoEstimado(peso.multiply(precio));
+            target.setTipoMerma(d.tipoMerma());
+            target.setOpDirecta(d.opDirecta());
+            target.setMermaKg(d.mermaKg());
+            target.setEstado(1);
+
+            BigDecimal subtotal = calcularSubtotal(target);
+            target.setImporteSubTotal(subtotal);
+
+            nuevosDetalles.add(target);
+
+            // Validación de completitud inline
+            boolean detalleCompleto =
+                    d.cantidad() != null &&
+                            d.mermaKg() != null &&
+                            d.opDirecta() != null &&
+                            d.peso() != null &&
+                            d.precioXKilo() != null &&
+                            d.tipoMerma() != null;
 
             if (!detalleCompleto) {
                 todosCompletos = false;
@@ -363,7 +373,7 @@ public class PedidoServiceImpl implements PedidoService {
 
         // 9. Procesar ELIMINACIONES (soft delete).
         // Iterar sobre los detalles que estaban originalmente en la BD.
-        for (DetallePedido actual : detallesActuales) {
+        for (PedidoDetalle actual : detallesActuales) {
             // Si un detalle existente no vino en la lista de IDs de la solicitud, se marca como inactivo.
             if (actual.getId() != null && !idsRecibidos.contains(actual.getId())) {
                 actual.setEstado(0); // Estado 0 = Inactivo.
@@ -375,28 +385,15 @@ public class PedidoServiceImpl implements PedidoService {
         pedido.setDetalles(nuevosDetalles);
 
 
-
-
         // guardar cantidad y precio total
-        List<DetallePedido> activos = nuevosDetalles.stream()
+        List<PedidoDetalle> activos = nuevosDetalles.stream()
                 .filter(dp -> dp.getEstado() != null && dp.getEstado() == 1)
                 .toList();
 
         BigDecimal importeTotal = activos.stream()
-                .map(dp -> {
-                    BigDecimal peso     = dp.getPeso() != null ? dp.getPeso() : BigDecimal.ZERO;
-                    BigDecimal precio   = dp.getPrecioXKilo() != null ? dp.getPrecioXKilo() : BigDecimal.ZERO;
-                    BigDecimal merma    = dp.getMermaKg() != null ? dp.getMermaKg() : BigDecimal.ZERO;
-                    int cantidad        = dp.getCantidadPollo() != null ? dp.getCantidadPollo() : 0;
-
-                    if (Boolean.TRUE.equals(dp.getOpDirecta())) {
-                        return peso.multiply(precio)
-                                .add(merma.multiply(BigDecimal.valueOf(cantidad)).multiply(precio));
-                    } else {
-                        return peso.multiply(precio);
-                    }
-                })
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .map(dp -> nvl(dp.getImporteSubTotal()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
 
         pedido.setImporteTotal(importeTotal);
         pedido.setCantidadDetalles(activos.size());

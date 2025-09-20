@@ -10,15 +10,14 @@ import com.utpsistemas.distribuidoraavesservice.cobranza.entity.Pago;
 import com.utpsistemas.distribuidoraavesservice.cobranza.entity.TipoPago;
 import com.utpsistemas.distribuidoraavesservice.cobranza.mapper.CobranzaMapper;
 import com.utpsistemas.distribuidoraavesservice.cobranza.mapper.PagoMapper;
-import com.utpsistemas.distribuidoraavesservice.cobranza.projection.CobranzaClienteResumenProjection;
 import com.utpsistemas.distribuidoraavesservice.cobranza.repository.CobranzaRepository;
 import com.utpsistemas.distribuidoraavesservice.cobranza.repository.FormaPagoRepository;
-import com.utpsistemas.distribuidoraavesservice.cobranza.repository.PagoRepository;
 import com.utpsistemas.distribuidoraavesservice.cobranza.repository.TipoPagoRepository;
 import com.utpsistemas.distribuidoraavesservice.estado.dto.EstadoResponse;
 import com.utpsistemas.distribuidoraavesservice.pedido.dto.DetallePedidoResponse;
-import com.utpsistemas.distribuidoraavesservice.pedido.entity.DetallePedido;
+import com.utpsistemas.distribuidoraavesservice.pedido.entity.PedidoDetalle;
 import com.utpsistemas.distribuidoraavesservice.pedido.entity.Pedido;
+import com.utpsistemas.distribuidoraavesservice.pedido.enums.EstadoPedidoEnum;
 import com.utpsistemas.distribuidoraavesservice.pedido.mapper.DetallePedidoMapper;
 import com.utpsistemas.distribuidoraavesservice.pedido.repository.PedidoRepository;
 import com.utpsistemas.distribuidoraavesservice.pedido.service.PedidoService;
@@ -73,7 +72,7 @@ public class CobranzaServiceImpl implements CobranzaService {
 
         BigDecimal total = pedido.getDetalles().stream()
                 .filter(det -> det.getEstado() == 1)
-                .map(DetallePedido::getMontoEstimado)
+                .map(PedidoDetalle::getMontoEstimado)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         Cobranza cobranza = new Cobranza();
@@ -101,12 +100,12 @@ public class CobranzaServiceImpl implements CobranzaService {
             throw new ApiException("No tiene asignado este cliente", HttpStatus.CONFLICT);
         }
 
-        List<DetallePedido> detallesActivos = pedido.getDetalles().stream()
+        List<PedidoDetalle> detallesActivos = pedido.getDetalles().stream()
                 .filter(det -> det.getEstado() == 1)
                 .toList();
 
         BigDecimal nuevoMontoTotal = detallesActivos.stream()
-                .map(DetallePedido::getMontoEstimado)
+                .map(PedidoDetalle::getMontoEstimado)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         cobranza.setMontoTotal(nuevoMontoTotal);
@@ -184,12 +183,12 @@ public class CobranzaServiceImpl implements CobranzaService {
 
             if (!pedidoService.validarAsignacionCliente(usuarioId, clienteId)) continue;
 
-            List<DetallePedido> detallesActivos = pedido.getDetalles().stream()
+            List<PedidoDetalle> detallesActivos = pedido.getDetalles().stream()
                     .filter(det -> det.getEstado() == 1)
                     .toList();
 
             BigDecimal nuevoMontoTotal = detallesActivos.stream()
-                    .map(DetallePedido::getMontoEstimado)
+                    .map(PedidoDetalle::getMontoEstimado)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             List<Pago> pagosActivos = pagoService.obtenerPagosActivosPorCobranza(cobranza.getId());
@@ -264,9 +263,12 @@ public class CobranzaServiceImpl implements CobranzaService {
             throw new ApiException("El usuario ingresado no corresponde", HttpStatus.CONFLICT);
         }*/
 
-        final int ESTADO_COBRANZA = 3;
+        var estadosCobranza = List.of(
+                EstadoPedidoEnum.EN_COBRANZA.getId(),
+                EstadoPedidoEnum.PARCIAL.getId()
+        );
 
-        var filas = pedidoRepository.resumirPorUsuarioYEstado(usuarioId, ESTADO_COBRANZA);
+        var filas = pedidoRepository.resumirPorUsuarioYEstados(usuarioId, estadosCobranza);
         return filas.stream()
                 .map(r -> new CobranzaClienteResumenResponse(
                         r.getClienteId(),

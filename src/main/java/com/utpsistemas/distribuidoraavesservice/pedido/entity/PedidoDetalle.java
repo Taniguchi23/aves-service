@@ -13,10 +13,10 @@ import java.math.BigDecimal;
 @Entity
 @Getter
 @Setter
-@Table(name = "pedido_detalle")
+@Table(name = "pedidos_detalle")
 @NoArgsConstructor
 @AllArgsConstructor
-public class DetallePedido {
+public class PedidoDetalle {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -36,6 +36,9 @@ public class DetallePedido {
 
     @Column(name = "merma_kg", precision = 19, scale = 2)
     private BigDecimal mermaKg;
+
+    @Column(name = "importe_subtotal", precision = 19, scale = 2)
+    private BigDecimal importeSubTotal;
 
     private Boolean opDirecta;
 

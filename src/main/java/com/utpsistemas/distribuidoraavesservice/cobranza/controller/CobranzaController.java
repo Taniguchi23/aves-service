@@ -62,6 +62,8 @@ import java.util.List;
         return ResponseEntity.ok(ApiResponse.success(cobranzaService.listarTipoPagos(),"Listar tipo de pago", https));
     }
 
+    //---------------------------------------
+
     //@PreAuthorize("hasRole('Cobrador') or #usuarioId == authentication.principal.id")
     @PreAuthorize("hasRole('Cobrador')")
     @GetMapping("resumen/usuario/{usuarioId}")

@@ -1,12 +1,12 @@
 package com.utpsistemas.distribuidoraavesservice.pedido.mapper;
 
 import com.utpsistemas.distribuidoraavesservice.pedido.dto.DetallePedidoResponse;
-import com.utpsistemas.distribuidoraavesservice.pedido.entity.DetallePedido;
+import com.utpsistemas.distribuidoraavesservice.pedido.entity.PedidoDetalle;
 import org.springframework.stereotype.Component;
 
 @Component
 public class DetallePedidoMapper {
-    public DetallePedidoResponse toResponse(DetallePedido detalle) {
+    public DetallePedidoResponse toResponse(PedidoDetalle detalle) {
         return new DetallePedidoResponse(
                 detalle.getId(),
                 detalle.getTipoAve().getId(),
@@ -15,6 +15,7 @@ public class DetallePedidoMapper {
                 detalle.getPeso(),
                 detalle.getPrecioXKilo(),
                 detalle.getMermaKg(),
+                detalle.getImporteSubTotal(),
                 detalle.getTipoMerma(),
                 detalle.getOpDirecta()
         );

@@ -9,6 +9,7 @@ public record DetallePedidoResponse(
         BigDecimal peso,
         BigDecimal precioXKilo,
         BigDecimal mermaKg,
+        BigDecimal importeSubTotal,
         String tipoMerma,
         Boolean opDirecta
 
