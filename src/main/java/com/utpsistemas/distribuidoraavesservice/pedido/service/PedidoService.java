@@ -14,4 +14,8 @@ public interface PedidoService {
 
     PedidoResponse confirmarPedido(Long id);
     List<PedidoResponse> pedidosPorUsuarioId(Long id);
+
+    List<PedidoResponse> pedidosPorUsuarioIdCobranza(Long id);
+
+    PedidoResponse pedidosPorId(Long id);
 }

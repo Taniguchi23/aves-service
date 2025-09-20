@@ -500,4 +500,27 @@ public class PedidoServiceImpl implements PedidoService {
                 .map(pedidoMapper::toResponse)
                 .toList();
     }
+
+    @Override
+    public List<PedidoResponse> pedidosPorUsuarioIdCobranza(Long usuarioId) {
+        var aggs = pedidoRepository.findAggByUsuario(usuarioId, List.of(EstadoPedidoEnum.PENDIENTE.getId(), EstadoPedidoEnum.POR_CONFIRMAR.getId()));
+        if (aggs.isEmpty()) return List.of();
+
+        var pedidoIds = aggs.stream().map(PedidoDetalleProjection::getPedidoId).toList();
+        var pedidos = pedidoRepository.fetchPedidosConDetalles(pedidoIds);
+
+
+        return pedidos.stream()
+                .map(pedidoMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public PedidoResponse pedidosPorId(Long pedidoId) {
+        Pedido pedido = pedidoRepository.fetchPedidoConDetallesById(pedidoId)
+                .orElseThrow(() -> new EntityNotFoundException("Pedido no encontrado: " + pedidoId));
+
+        return pedidoMapper.toResponse(pedido);
+    }
+
 }

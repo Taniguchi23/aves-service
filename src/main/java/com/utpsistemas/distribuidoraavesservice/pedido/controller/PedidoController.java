@@ -55,10 +55,22 @@ public class PedidoController {
 
     /***************/
 
+    @PreAuthorize("hasRole('Vendedor')")
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<PedidoResponse>> pedidosPorId(
+            @PathVariable Long id,
+            HttpServletRequest request){
+        return ResponseEntity.ok(ApiResponse.success(
+                        pedidoService.pedidosPorId(id),
+                        "Pedido listado", request
+                )
+        );
+    }
+
 
     @PreAuthorize("hasRole('Vendedor')")
     @GetMapping("/usuario/{id}")
-    public ResponseEntity<ApiResponse<List<PedidoResponse>>> pedidosPorClienteId(
+    public ResponseEntity<ApiResponse<List<PedidoResponse>>> pedidosPorUsuarioId(
             @PathVariable Long id,
             HttpServletRequest request){
         return ResponseEntity.ok(ApiResponse.success(
@@ -80,7 +92,16 @@ public class PedidoController {
     }
 
 
-
+    @GetMapping("/usuario/{id}/cobranza")
+    public ResponseEntity<ApiResponse<List<PedidoResponse>>> pedidosPorUsuarioIdCobranza(
+            @PathVariable Long id,
+            HttpServletRequest request){
+        return ResponseEntity.ok(ApiResponse.success(
+                        pedidoService.pedidosPorUsuarioIdCobranza(id),
+                        "Pedido listado", request
+                )
+        );
+    }
 
 
 }

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PedidoRepository extends JpaRepository<Pedido,Long> {
@@ -40,7 +41,7 @@ public interface PedidoRepository extends JpaRepository<Pedido,Long> {
        """)
     List<CobranzaClienteResumenProjection> resumirPorUsuarioYEstados(
             @Param("usuarioId") Long usuarioId,
-            @Param("estadoIds") Collection<Integer> estadoIds);
+            @Param("estadoIds") List<Integer> estadoIds);
 
 
 
@@ -79,4 +80,17 @@ public interface PedidoRepository extends JpaRepository<Pedido,Long> {
     order by p.fechaCreacion desc
     """)
     List<Pedido> fetchPedidosConDetalles(@Param("pedidoIds") List<Long> pedidoIds);
+
+
+    @Query("""
+    select distinct p
+    from Pedido p
+      left join fetch p.cliente
+      left join fetch p.usuario
+      left join fetch p.estado
+      left join fetch p.detalles d
+      left join fetch d.tipoAve
+    where p.id = :pedidoId
+    """)
+    Optional<Pedido> fetchPedidoConDetallesById(@Param("pedidoId") Long pedidoId);
 }
