@@ -2,6 +2,7 @@ package com.utpsistemas.distribuidoraavesservice.pedido.repository;
 
 import com.utpsistemas.distribuidoraavesservice.cobranza.projection.CobranzaClienteResumenProjection;
 import com.utpsistemas.distribuidoraavesservice.pedido.entity.Pedido;
+import com.utpsistemas.distribuidoraavesservice.pedido.projection.PedidoDetalleProjection;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -37,5 +38,37 @@ public interface PedidoRepository extends JpaRepository<Pedido,Long> {
     List<CobranzaClienteResumenProjection> resumirPorUsuarioYEstado(@Param("usuarioId") Long usuarioId,
                                                                     @Param("estadoId") Integer estadoId);
 
+    @Query("""
+    select p.id as pedidoId,
+           cob.id as cobranzaId,
+           cob.estado as cobranzaEstado,
+           coalesce(cob.montoTotal, 0) as total,
+           coalesce(sum(case when pa.estado = 'A' then pa.monto else 0 end), 0) as pagado
+    from Pedido p
+      join p.cliente c
+      join UsuarioCliente uc
+           on uc.cliente = c
+          and uc.estado = 'A'
+          and uc.usuario.id = :usuarioId
+      left join Cobranza cob on cob.pedido = p
+      left join Pago pa on pa.cobranza = cob
+          where p.estado.id in :estadoIds
+    group by p.id, cob.id, cob.estado, cob.montoTotal
+    order by max(p.fechaCreacion) desc
+    """)
+    List<PedidoDetalleProjection> findAggByUsuario(@Param("usuarioId") Long usuarioId,
+                                                   @Param("estadoIds") List<Integer> estadoIds);
 
+
+    @Query("""
+    select distinct p
+    from Pedido p
+      left join fetch p.cliente
+      left join fetch p.estado
+      left join fetch p.detalles d
+      left join fetch d.tipoAve
+    where p.id in :pedidoIds
+    order by p.fechaCreacion desc
+    """)
+    List<Pedido> fetchPedidosConDetalles(@Param("pedidoIds") List<Long> pedidoIds);
 }

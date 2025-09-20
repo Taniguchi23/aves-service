@@ -63,4 +63,9 @@ public class PedidoMapper {
                 cobranzaDTO
         );
     }
+
+    public PedidoResponse toResponse(Pedido pedido) {
+        return toResponse(pedido, null);
+    }
+
 }

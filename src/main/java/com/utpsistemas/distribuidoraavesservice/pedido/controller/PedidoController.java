@@ -51,6 +51,23 @@ public class PedidoController {
         );
     }
 
+
+
+    /***************/
+
+
+    @PreAuthorize("hasRole('Vendedor')")
+    @GetMapping("/usuario/{id}")
+    public ResponseEntity<ApiResponse<List<PedidoResponse>>> pedidosPorClienteId(
+            @PathVariable Long id,
+            HttpServletRequest request){
+        return ResponseEntity.ok(ApiResponse.success(
+                        pedidoService.pedidosPorUsuarioId(id),
+                        "Pedido listado", request
+                )
+        );
+    }
+
     @PutMapping("/{id}/confirmar")
     public ResponseEntity<ApiResponse<PedidoResponse>> confirmarPedido(
             @PathVariable Long id,
@@ -61,5 +78,9 @@ public class PedidoController {
                 ApiResponse.success(resp, "Pedido confirmado (estado = 2)", request)
         );
     }
+
+
+
+
 
 }

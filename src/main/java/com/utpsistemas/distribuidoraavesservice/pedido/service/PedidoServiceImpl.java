@@ -4,18 +4,14 @@ import com.utpsistemas.distribuidoraavesservice.auth.entity.Usuario;
 import com.utpsistemas.distribuidoraavesservice.auth.exception.ApiException;
 import com.utpsistemas.distribuidoraavesservice.auth.repository.UsuarioRepository;
 import com.utpsistemas.distribuidoraavesservice.auth.security.CustomUserDetails;
-import com.utpsistemas.distribuidoraavesservice.cliente.dto.ClienteMiniDTO;
 import com.utpsistemas.distribuidoraavesservice.cliente.entity.Cliente;
 import com.utpsistemas.distribuidoraavesservice.cliente.repository.ClienteRepository;
 import com.utpsistemas.distribuidoraavesservice.cliente.repository.UsuarioClienteRepository;
 import com.utpsistemas.distribuidoraavesservice.cobranza.dto.CobranzaDTO;
-import com.utpsistemas.distribuidoraavesservice.cobranza.dto.CobranzaResponse;
-import com.utpsistemas.distribuidoraavesservice.cobranza.dto.CobranzaResumenDTO;
 import com.utpsistemas.distribuidoraavesservice.cobranza.entity.Cobranza;
+import com.utpsistemas.distribuidoraavesservice.pedido.enums.EstadoPedidoEnum;
 import com.utpsistemas.distribuidoraavesservice.cobranza.repository.CobranzaRepository;
 import com.utpsistemas.distribuidoraavesservice.cobranza.repository.PagoRepository;
-import com.utpsistemas.distribuidoraavesservice.estado.dto.EstadoDTO;
-import com.utpsistemas.distribuidoraavesservice.estado.dto.EstadoResponse;
 import com.utpsistemas.distribuidoraavesservice.estado.entity.Estado;
 import com.utpsistemas.distribuidoraavesservice.estado.repository.EstadoRepository;
 import com.utpsistemas.distribuidoraavesservice.pedido.dto.*;
@@ -23,22 +19,19 @@ import com.utpsistemas.distribuidoraavesservice.pedido.entity.DetallePedido;
 import com.utpsistemas.distribuidoraavesservice.pedido.entity.Pedido;
 import com.utpsistemas.distribuidoraavesservice.pedido.mapper.DetallePedidoMapper;
 import com.utpsistemas.distribuidoraavesservice.pedido.mapper.PedidoMapper;
+import com.utpsistemas.distribuidoraavesservice.pedido.projection.PedidoDetalleProjection;
 import com.utpsistemas.distribuidoraavesservice.pedido.repository.PedidoRepository;
 import com.utpsistemas.distribuidoraavesservice.tipoaves.entity.TipoAve;
 import com.utpsistemas.distribuidoraavesservice.tipoaves.repository.TipoAveRepository;
-import com.utpsistemas.distribuidoraavesservice.usuario.dto.UsuarioMiniDTO;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -490,5 +483,24 @@ public class PedidoServiceImpl implements PedidoService {
         return pedidoMapper.toResponse(pedidoSave, null);
     }
 
+    @Override
+    public List<PedidoResponse> pedidosPorUsuarioId(Long usuarioId) {
+        /*CustomUserDetails auth = (CustomUserDetails) SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
+        Long usrId = auth.getId();
+        if (usrId != usuarioId) {
+            throw new ApiException("El usuario ingresado no corresponde", HttpStatus.CONFLICT);
+        }*/
 
+        var aggs = pedidoRepository.findAggByUsuario(usuarioId, List.of(EstadoPedidoEnum.PENDIENTE.getId(), EstadoPedidoEnum.POR_CONFIRMAR.getId()));
+        if (aggs.isEmpty()) return List.of();
+
+        var pedidoIds = aggs.stream().map(PedidoDetalleProjection::getPedidoId).toList();
+        var pedidos = pedidoRepository.fetchPedidosConDetalles(pedidoIds);
+
+
+        return pedidos.stream()
+                .map(pedidoMapper::toResponse)
+                .toList();
+    }
 }

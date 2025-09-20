@@ -11,5 +11,7 @@ public interface PedidoService {
     List<PedidoResponse> listarPedidosAsignadosAlUsuario();
     PedidoResponse actualizarPedido(PedidoRequest pedidoRequest);
     boolean validarAsignacionCliente(Long usuarioId, Long clienteId);
+
     PedidoResponse confirmarPedido(Long id);
+    List<PedidoResponse> pedidosPorUsuarioId(Long id);
 }
