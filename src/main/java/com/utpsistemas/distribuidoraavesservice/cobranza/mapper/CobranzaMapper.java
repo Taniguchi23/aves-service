@@ -19,7 +19,7 @@ public class CobranzaMapper {
                 cobranza.getMontoTotal(),
                 cobranza.getFecha(),
                 cobranza.getEstado(),
-                pedidoMapper.toResponse(cobranza.getPedido(),null)
+                pedidoMapper.toResponse(cobranza.getPedido())
         );
     }
 }

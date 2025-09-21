@@ -2,6 +2,7 @@ package com.utpsistemas.distribuidoraavesservice.pedido.entity;
 
 import com.utpsistemas.distribuidoraavesservice.auth.entity.Usuario;
 import com.utpsistemas.distribuidoraavesservice.cliente.entity.Cliente;
+import com.utpsistemas.distribuidoraavesservice.cobranza.entity.PedidoCobranzaMovimiento;
 import com.utpsistemas.distribuidoraavesservice.estado.entity.Estado;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -44,8 +45,20 @@ public class Pedido {
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL)
     private List<PedidoDetalle> detalles = new ArrayList<>();
 
-    @Column(name = "importe_total", precision = 19, scale = 2)
-    private BigDecimal importeTotal;
+    //@OneToMany(mappedBy = "pedido", fetch = FetchType.LAZY)
+    //private List<PedidoCobranzaMovimiento> movimientos;
+
+    @Column(name = "total_importe", precision = 19, scale = 2)
+    private BigDecimal totalImporte= BigDecimal.ZERO;
+
+    @Column(name = "total_pagado", precision = 19, scale = 2)
+    private BigDecimal totalPagado= BigDecimal.ZERO;
+
+    @Column(name = "total_descuento", precision = 19, scale = 2)
+    private BigDecimal totalDescuento= BigDecimal.ZERO;
+
+    @Column(name = "total_saldo", precision = 19, scale = 2)
+    private BigDecimal totalSaldo= BigDecimal.ZERO;
 
     @Column(name = "cantidad_detalles")
     private Integer cantidadDetalles;

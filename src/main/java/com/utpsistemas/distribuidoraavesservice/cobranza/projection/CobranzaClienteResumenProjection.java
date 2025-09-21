@@ -6,9 +6,12 @@ import java.time.LocalDateTime;
 public interface CobranzaClienteResumenProjection {
     Long getClienteId();
     String getClienteNombre();
-    BigDecimal getImporteTotal();
+    BigDecimal getTotalImporte();
     Long getCantidadPedidos();
     Long getEstadoId();
     String getEstadoNombre();
     LocalDateTime getFechaMax();
+    BigDecimal getTotalPagado();
+    BigDecimal getTotalDescuento();
+    BigDecimal getTotalSaldo();
 }

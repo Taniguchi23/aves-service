@@ -8,10 +8,13 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record CobranzaClienteResumenResponse(
-        Long id,
         ClienteMiniDTO cliente,
-        BigDecimal importeTotal,
+        BigDecimal totalImporte,
         Integer cantidadPedidos,
         EstadoResponse estado,
         @JsonFormat(pattern = "dd-MM-yyyy")
-        LocalDateTime fecha) {}
+        LocalDateTime fecha,
+        BigDecimal totalPagado,
+        BigDecimal totalDescuento,
+        BigDecimal totalSaldo
+) {}

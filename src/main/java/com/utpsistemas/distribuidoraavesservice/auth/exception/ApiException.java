@@ -12,4 +12,9 @@ public class ApiException extends RuntimeException{
         this.status = status;
     }
 
+    public ApiException(String message) {
+        super(message);
+        this.status = HttpStatus.BAD_REQUEST;
+    }
+
 }

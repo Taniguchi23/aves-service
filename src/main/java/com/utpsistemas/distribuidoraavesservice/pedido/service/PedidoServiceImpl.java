@@ -7,7 +7,6 @@ import com.utpsistemas.distribuidoraavesservice.auth.security.CustomUserDetails;
 import com.utpsistemas.distribuidoraavesservice.cliente.entity.Cliente;
 import com.utpsistemas.distribuidoraavesservice.cliente.repository.ClienteRepository;
 import com.utpsistemas.distribuidoraavesservice.cliente.repository.UsuarioClienteRepository;
-import com.utpsistemas.distribuidoraavesservice.cobranza.dto.CobranzaDTO;
 import com.utpsistemas.distribuidoraavesservice.cobranza.entity.Cobranza;
 import com.utpsistemas.distribuidoraavesservice.pedido.enums.EstadoPedidoEnum;
 import com.utpsistemas.distribuidoraavesservice.cobranza.repository.CobranzaRepository;
@@ -137,7 +136,8 @@ public class PedidoServiceImpl implements PedidoService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .setScale(2, RoundingMode.HALF_UP);
 
-        pedido.setImporteTotal(importeTotal);
+        pedido.setTotalImporte(importeTotal);
+        pedido.setTotalSaldo(importeTotal);
         pedido.setCantidadDetalles(activos.size());
 
 
@@ -150,7 +150,7 @@ public class PedidoServiceImpl implements PedidoService {
         Pedido guardado = pedidoRepository.save(pedido);
 
         // 9. Mapear la entidad Pedido guardada a un DTO de respuesta (PedidoResponse) y retornarlo.
-        return pedidoMapper.toResponse(guardado,null);
+        return pedidoMapper.toResponse(guardado);
     }
 
     private BigDecimal calcularSubtotal(PedidoDetalle dp) {
@@ -213,30 +213,8 @@ public class PedidoServiceImpl implements PedidoService {
         }
 
         // 6. Mapear cada entidad Pedido a su DTO de respuesta (PedidoResponse).
-        List<PedidoResponse> responses = pedidos.stream().map(p -> {
-            CobranzaDTO cobranzaDTO = null;
-            // Buscar si existe una cobranza para el pedido actual en el mapa.
-            Cobranza c = cobranzaByPedidoId.get(p.getId());
-            if (c != null) {
-                // Si hay cobranza, obtener el total pagado desde el mapa de pagos.
-                BigDecimal pagado = sumPagosByCobranza.getOrDefault(c.getId(), BigDecimal.ZERO);
-                BigDecimal total = c.getMontoTotal() != null ? c.getMontoTotal() : BigDecimal.ZERO;
-                // Calcular el saldo pendiente.
-                BigDecimal saldo = total.subtract(pagado);
-
-                // Crear el DTO con el resumen de la cobranza.
-                cobranzaDTO = new CobranzaDTO(
-                        c.getId(),
-                        c.getEstado(),
-                        total,
-                        pagado,
-                        saldo
-                );
-            }
-
-            // Usar el mapper para convertir el Pedido y su CobranzaDTO (si existe) a un PedidoResponse.
-            return pedidoMapper.toResponse(p, cobranzaDTO);
-        }).toList();
+        // Usar el mapper para convertir el Pedido y su CobranzaDTO (si existe) a un PedidoResponse.
+        List<PedidoResponse> responses = pedidos.stream().map(pedidoMapper::toResponse).toList();
 
         // 7. Definir un orden de prioridad personalizado para los estados de los pedidos.
         Map<String, Integer> ordenEstados = Map.of(
@@ -395,7 +373,8 @@ public class PedidoServiceImpl implements PedidoService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .setScale(2, RoundingMode.HALF_UP);
 
-        pedido.setImporteTotal(importeTotal);
+        pedido.setTotalImporte(importeTotal);
+        pedido.setTotalSaldo(importeTotal);
         pedido.setCantidadDetalles(activos.size());
 
 
@@ -428,30 +407,8 @@ public class PedidoServiceImpl implements PedidoService {
         // 12. Guardar el pedido y todos sus detalles (actualizados, nuevos e inactivados) en la BD.
         Pedido guardado = pedidoRepository.save(pedido);
 
-        // 13. Preparar el DTO de respuesta, incluyendo la información de cobranza si existe.
-        CobranzaDTO cobranzaDTO = null;
-        Optional<Cobranza> cobranzaOpt = cobranzaRepository.findByPedidoId(guardado.getId());
-        if (cobranzaOpt.isPresent()) {
-            Cobranza c = cobranzaOpt.get();
-
-            // Sumar los pagos activos para calcular el saldo.
-            BigDecimal pagado = pagoRepository.sumMontosActivosByCobranzaId(c.getId());
-            if (pagado == null) pagado = BigDecimal.ZERO;
-
-            BigDecimal total = c.getMontoTotal() != null ? c.getMontoTotal() : BigDecimal.ZERO;
-            BigDecimal saldo = total.subtract(pagado);
-
-            // Construir el DTO de cobranza.
-            cobranzaDTO = new CobranzaDTO(
-                    c.getId(),
-                    c.getEstado(),
-                    total,
-                    pagado,
-                    saldo
-            );
-        }
         // 14. Mapear la entidad Pedido guardada a un DTO de respuesta y retornarlo.
-        return pedidoMapper.toResponse(guardado, cobranzaDTO);
+        return pedidoMapper.toResponse(guardado);
 
     }
 
@@ -477,7 +434,7 @@ public class PedidoServiceImpl implements PedidoService {
         pedido.setEstado(confirmado);
 
         Pedido pedidoSave = pedidoRepository.save(pedido);
-        return pedidoMapper.toResponse(pedidoSave, null);
+        return pedidoMapper.toResponse(pedidoSave);
     }
 
     @Override
@@ -489,31 +446,16 @@ public class PedidoServiceImpl implements PedidoService {
             throw new ApiException("El usuario ingresado no corresponde", HttpStatus.CONFLICT);
         }*/
 
-        var aggs = pedidoRepository.findAggByUsuario(usuarioId, List.of(EstadoPedidoEnum.PENDIENTE.getId(), EstadoPedidoEnum.POR_CONFIRMAR.getId()));
-        if (aggs.isEmpty()) return List.of();
+        var estados = List.of(EstadoPedidoEnum.PENDIENTE.getId(), EstadoPedidoEnum.POR_CONFIRMAR.getId());
 
-        var pedidoIds = aggs.stream().map(PedidoDetalleProjection::getPedidoId).toList();
-        var pedidos = pedidoRepository.fetchPedidosConDetalles(pedidoIds);
-
+        var pedidos = pedidoRepository.fetchPedidosConDetallesPorUsuario(usuarioId, estados);
 
         return pedidos.stream()
                 .map(pedidoMapper::toResponse)
                 .toList();
     }
 
-    @Override
-    public List<PedidoResponse> pedidosPorUsuarioIdCobranza(Long usuarioId) {
-        var aggs = pedidoRepository.findAggByUsuario(usuarioId, List.of(EstadoPedidoEnum.PENDIENTE.getId(), EstadoPedidoEnum.POR_CONFIRMAR.getId()));
-        if (aggs.isEmpty()) return List.of();
 
-        var pedidoIds = aggs.stream().map(PedidoDetalleProjection::getPedidoId).toList();
-        var pedidos = pedidoRepository.fetchPedidosConDetalles(pedidoIds);
-
-
-        return pedidos.stream()
-                .map(pedidoMapper::toResponse)
-                .toList();
-    }
 
     @Override
     public PedidoResponse pedidosPorId(Long pedidoId) {

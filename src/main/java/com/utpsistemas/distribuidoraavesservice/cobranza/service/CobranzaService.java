@@ -19,4 +19,7 @@ public interface CobranzaService {
 
     List<CobranzaClienteResumenResponse> listarResumenCobranzasPorUsuario(Long usuarioId);
 
+    List<CobranzaPedidoResponse> listarCobranzaPorUsuario(Long usuarioId);
+
+    CobranzaPedidoResponse cobranzaPedidoPorId(Long usuarioId, Long pedidoId);
 }

@@ -92,16 +92,7 @@ public class PedidoController {
     }
 
 
-    @GetMapping("/usuario/{id}/cobranza")
-    public ResponseEntity<ApiResponse<List<PedidoResponse>>> pedidosPorUsuarioIdCobranza(
-            @PathVariable Long id,
-            HttpServletRequest request){
-        return ResponseEntity.ok(ApiResponse.success(
-                        pedidoService.pedidosPorUsuarioIdCobranza(id),
-                        "Pedido listado", request
-                )
-        );
-    }
+
 
 
 }

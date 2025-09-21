@@ -74,4 +74,25 @@ import java.util.List;
         return ResponseEntity.ok(ApiResponse.success(data, "Resumen de cobranzas", https));
     }
 
+    //@PreAuthorize("hasRole('Cobrador')")
+    @GetMapping("pedidos/usuario/{usuarioId}/pedido/{pedidoId}")
+    public ResponseEntity<ApiResponse<CobranzaPedidoResponse>> cobranzaPedidoPorId(
+            @PathVariable Long usuarioId,
+            @PathVariable Long pedidoId,
+            HttpServletRequest https) {
+
+        var data = cobranzaService.cobranzaPedidoPorId(usuarioId, pedidoId);
+        return ResponseEntity.ok(ApiResponse.success(data, "Resumen de cobranzas", https));
+    }
+
+    //@PreAuthorize("hasRole('Cobrador')")
+    @GetMapping("pedidos/usuario/{usuarioId}")
+    public ResponseEntity<ApiResponse<List<CobranzaPedidoResponse>>> listarCobranzaPorUsuario(
+            @PathVariable Long usuarioId, HttpServletRequest https) {
+
+        var data = cobranzaService.listarCobranzaPorUsuario(usuarioId);
+        return ResponseEntity.ok(ApiResponse.success(data, "Resumen de cobranzas", https));
+    }
+
+
 }
