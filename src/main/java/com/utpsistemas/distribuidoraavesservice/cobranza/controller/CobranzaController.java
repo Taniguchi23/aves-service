@@ -1,23 +1,27 @@
 package com.utpsistemas.distribuidoraavesservice.cobranza.controller;
 
+import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.utpsistemas.distribuidoraavesservice.auth.helper.ApiResponse;
 import com.utpsistemas.distribuidoraavesservice.cobranza.dto.*;
 import com.utpsistemas.distribuidoraavesservice.cobranza.entity.FormaPago;
 import com.utpsistemas.distribuidoraavesservice.cobranza.entity.TipoPago;
-import com.utpsistemas.distribuidoraavesservice.cobranza.projection.CobranzaClienteResumenProjection;
 import com.utpsistemas.distribuidoraavesservice.cobranza.service.CobranzaService;
 import com.utpsistemas.distribuidoraavesservice.cobranza.service.PagoService;
-import com.utpsistemas.distribuidoraavesservice.pedido.dto.PedidoResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 @RestController
 @RequestMapping("aves-service/cobranza")
@@ -86,12 +90,46 @@ import java.util.List;
     }
 
     //@PreAuthorize("hasRole('Cobrador')")
-    @GetMapping("pedidos/usuario/{usuarioId}")
+    @GetMapping("pedidos/usuario/{usuarioId}/cliente/{clienteId}")
     public ResponseEntity<ApiResponse<List<CobranzaPedidoResponse>>> listarCobranzaPorUsuario(
-            @PathVariable Long usuarioId, HttpServletRequest https) {
+            @PathVariable Long usuarioId,@PathVariable Long clienteId, HttpServletRequest https) {
 
-        var data = cobranzaService.listarCobranzaPorUsuario(usuarioId);
+        var data = cobranzaService.listarCobranzaPorUsuarioAndCliente(usuarioId, clienteId);
         return ResponseEntity.ok(ApiResponse.success(data, "Resumen de cobranzas", https));
+    }
+
+    private final SpringTemplateEngine templateEngine;
+
+    @GetMapping(value = "/pedidos/usuario/{usuarioId}/recibos.pdf", produces = "application/pdf")
+    public void descargarRecibosPdf(@PathVariable Long usuarioId,
+                                    HttpServletResponse response) throws Exception {
+
+        var pedidos = cobranzaService.listarCobranzaPorUsuario(usuarioId);
+
+        var ctx = new org.thymeleaf.context.Context(new java.util.Locale("es","PE"));
+        ctx.setVariable("usuarioId", usuarioId);
+        ctx.setVariable("pedidos", pedidos);
+        ctx.setVariable("avicolaNombre", "NOMBRE DE LA AVÍCOLA");
+        ctx.setVariable("whatsapp", "999999999");
+        // ctx.setVariable("logoPath", "/images/logo.png");
+
+        String html = templateEngine.process("recibos-ticket", ctx);
+
+        response.setContentType("application/pdf");
+        response.setHeader("Content-Disposition", "attachment; filename=\"recibos-" + usuarioId + ".pdf\"");
+
+        String baseUrl = new org.springframework.core.io.ClassPathResource("static/")
+                .getURL().toExternalForm();
+
+        try (var os = response.getOutputStream()) {
+            var builder = new com.openhtmltopdf.pdfboxout.PdfRendererBuilder();
+            builder.useFastMode();
+            builder.withHtmlContent(html, baseUrl);
+            builder.useDefaultPageSize(68, 220, com.openhtmltopdf.pdfboxout.PdfRendererBuilder.PageSizeUnits.MM);
+
+            builder.toStream(os);
+            builder.run();
+        }
     }
 
 

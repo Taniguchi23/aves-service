@@ -26,6 +26,8 @@ import com.utpsistemas.distribuidoraavesservice.pedido.mapper.PedidoMapper;
 import com.utpsistemas.distribuidoraavesservice.pedido.projection.PedidoDetalleProjection;
 import com.utpsistemas.distribuidoraavesservice.pedido.repository.PedidoRepository;
 import com.utpsistemas.distribuidoraavesservice.pedido.service.PedidoService;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -311,6 +313,17 @@ public class CobranzaServiceImpl implements CobranzaService {
                 .map(cobranzaPedidoMapper::toResponse)
                 .toList();
     }
+    @Override
+    public List<CobranzaPedidoResponse> listarCobranzaPorUsuarioAndCliente(Long usuarioId, Long clienteId) {
+        var estados = List.of(EstadoPedidoEnum.EN_COBRANZA.getId(), EstadoPedidoEnum.PARCIAL.getId());
+
+        var pedidos = pedidoRepository.fetchPedidosConDetallesPorUsuarioAndCliente(usuarioId, clienteId, estados);
+        if (pedidos.isEmpty()) return List.of();
+
+        return pedidos.stream()
+                .map(cobranzaPedidoMapper::toResponse)
+                .toList();
+    }
 
     @Override
     public CobranzaPedidoResponse cobranzaPedidoPorId(Long usuarioId, Long pedidoId) {
@@ -328,4 +341,7 @@ public class CobranzaServiceImpl implements CobranzaService {
 
         return cobranzaPedidoMapper.toResponse(pedido, movimientos);
     }
+
+
+
 }

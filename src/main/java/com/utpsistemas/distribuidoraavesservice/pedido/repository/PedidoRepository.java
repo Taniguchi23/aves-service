@@ -192,4 +192,26 @@ where p.id = :pedidoId
     """)
     List<PedidoDetalleProjection> fetchPedidosConDetallesYMovimientos(@Param("usuarioId") Long usuarioId,
                                                    @Param("estadoIds") List<Long> estadoIds);
+
+    @Query("""
+    select distinct p
+    from Pedido p
+      join fetch p.cliente c
+      join fetch p.estado  e
+      left join fetch p.detalles d
+      left join fetch d.tipoAve
+    where e.id in :estadoIds
+      and c.id = :clienteId
+      and exists (
+           select 1 from UsuarioCliente uc
+           where uc.cliente = c
+             and uc.usuario.id = :usuarioId
+             and uc.estado = 'A'
+      )
+    order by p.fechaCreacion desc
+    """)
+    List<Pedido> fetchPedidosConDetallesPorUsuarioAndCliente(
+            @Param("usuarioId") Long usuarioId,
+            @Param("clienteId") Long clienteId,
+            @Param("estadoIds") List<Integer> estadoIds);
 }

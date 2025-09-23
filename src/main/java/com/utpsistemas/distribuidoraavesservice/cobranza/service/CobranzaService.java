@@ -5,6 +5,8 @@ import com.utpsistemas.distribuidoraavesservice.cobranza.entity.FormaPago;
 import com.utpsistemas.distribuidoraavesservice.cobranza.entity.TipoPago;
 import com.utpsistemas.distribuidoraavesservice.cobranza.projection.CobranzaClienteResumenProjection;
 import com.utpsistemas.distribuidoraavesservice.pedido.dto.PedidoResponse;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
@@ -22,4 +24,9 @@ public interface CobranzaService {
     List<CobranzaPedidoResponse> listarCobranzaPorUsuario(Long usuarioId);
 
     CobranzaPedidoResponse cobranzaPedidoPorId(Long usuarioId, Long pedidoId);
+
+    List<CobranzaPedidoResponse> listarCobranzaPorUsuarioAndCliente(Long usuarioId, Long clienteId);
+
+
+
 }
