@@ -208,7 +208,7 @@ where p.id = :pedidoId
              and uc.usuario.id = :usuarioId
              and uc.estado = 'A'
       )
-    order by p.fechaCreacion desc
+    order by p.fechaCreacion asc
     """)
     List<Pedido> fetchPedidosConDetallesPorUsuarioAndCliente(
             @Param("usuarioId") Long usuarioId,

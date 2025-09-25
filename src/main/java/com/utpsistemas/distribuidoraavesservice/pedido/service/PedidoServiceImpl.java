@@ -99,14 +99,6 @@ public class PedidoServiceImpl implements PedidoService {
             BigDecimal subtotal = calcularSubtotal(detalle);
             detalle.setImporteSubTotal(subtotal);
 
-            // Calcular monto
-            /*BigDecimal monto = BigDecimal.ZERO;
-            if (d.peso() != null && d.precioXKilo() != null) {
-                monto = d.peso().multiply(d.precioXKilo());
-            }
-            detalle.setMontoEstimado(monto);*/
-
-            // Estado por defecto del detalle
             detalle.setEstado(1);
 
             // Validar si el detalle está completo
@@ -382,28 +374,6 @@ public class PedidoServiceImpl implements PedidoService {
         pedido.setEstado(estadoPedido);
 
 
-
-
-
-        // === Reglas de negocio post-procesamiento ===
-
-        // 11. Verificar si el estado del pedido debe cambiar automáticamente.
-        // Se comprueba si todos los detalles ACTIVOS tienen peso y precio.
-        /* boolean todosCompletos = nuevosDetalles.stream()
-                .filter(dp -> dp.getEstado() != null && dp.getEstado() == 1) // Solo considerar detalles activos.
-                .allMatch(dp ->
-                        dp.getPeso() != null && dp.getPeso().compareTo(BigDecimal.ZERO) > 0 &&
-                                dp.getPrecioXKilo() != null && dp.getPrecioXKilo().compareTo(BigDecimal.ZERO) > 0
-                );
-
-        // Si todos los detalles están completos y el pedido estaba 'Pendiente', se cambia a 'Registrado'.
-        if (todosCompletos && "Pendiente".equalsIgnoreCase(pedido.getEstado().getNombre())) {
-            Estado registrado = estadoRepository.findByNombreIgnoreCase("Registrado")
-                    .orElseThrow(() -> new ApiException("Estado 'Registrado' no configurado", HttpStatus.CONFLICT));
-            pedido.setEstado(registrado);
-        }*/
-
-        // 12. Guardar el pedido y todos sus detalles (actualizados, nuevos e inactivados) en la BD.
         Pedido guardado = pedidoRepository.save(pedido);
 
         // 14. Mapear la entidad Pedido guardada a un DTO de respuesta y retornarlo.
