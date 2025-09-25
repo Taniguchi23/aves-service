@@ -100,11 +100,11 @@ public class PedidoServiceImpl implements PedidoService {
             detalle.setImporteSubTotal(subtotal);
 
             // Calcular monto
-            BigDecimal monto = BigDecimal.ZERO;
+            /*BigDecimal monto = BigDecimal.ZERO;
             if (d.peso() != null && d.precioXKilo() != null) {
                 monto = d.peso().multiply(d.precioXKilo());
             }
-            detalle.setMontoEstimado(monto);
+            detalle.setMontoEstimado(monto);*/
 
             // Estado por defecto del detalle
             detalle.setEstado(1);
@@ -158,9 +158,8 @@ public class PedidoServiceImpl implements PedidoService {
         BigDecimal precio = nvl(dp.getPrecioXKilo());
         BigDecimal merma  = nvl(dp.getMermaKg());
         int cantidad      = dp.getCantidadPollo() != null ? dp.getCantidadPollo() : 0;
-
         BigDecimal base = peso.multiply(precio);
-        if (Boolean.TRUE.equals(dp.getOpDirecta())) {
+        if (Boolean.FALSE.equals(dp.getOpDirecta())) {
             BigDecimal extra = merma.multiply(BigDecimal.valueOf(cantidad)).multiply(precio);
             base = base.add(extra);
         }
@@ -324,7 +323,7 @@ public class PedidoServiceImpl implements PedidoService {
             target.setCantidadPollo(d.cantidad());
             target.setPeso(peso);
             target.setPrecioXKilo(precio);
-            target.setMontoEstimado(peso.multiply(precio));
+            //target.setMontoEstimado(peso.multiply(precio));
             target.setTipoMerma(d.tipoMerma());
             target.setOpDirecta(d.opDirecta());
             target.setMermaKg(d.mermaKg());
