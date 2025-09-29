@@ -374,6 +374,7 @@ public class PedidoServiceImpl implements PedidoService {
         pedido.setEstado(estadoPedido);
 
 
+
         Pedido guardado = pedidoRepository.save(pedido);
 
         // 14. Mapear la entidad Pedido guardada a un DTO de respuesta y retornarlo.

@@ -4,11 +4,8 @@ import com.utpsistemas.distribuidoraavesservice.auth.exception.ApiException;
 import com.utpsistemas.distribuidoraavesservice.auth.security.CustomUserDetails;
 import com.utpsistemas.distribuidoraavesservice.cobranza.dto.*;
 import com.utpsistemas.distribuidoraavesservice.cobranza.entity.*;
-import com.utpsistemas.distribuidoraavesservice.cobranza.enums.TipoPedidoCobranzaMovimiento;
 import com.utpsistemas.distribuidoraavesservice.cobranza.repository.*;
 import com.utpsistemas.distribuidoraavesservice.pedido.repository.PedidoRepository;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -171,6 +168,60 @@ class CobranzaMovimientoServiceImpl implements CobranzaMovimientoService {
                 aplicados
         );
     }
+
+    @Override
+    @Transactional
+    public MovimientoInactivarResponse inactivarMovimiento(Long movimientoId) {
+        var mov = cobranzaMovimientoRepository.findByIdForUpdate(movimientoId)
+                .orElseThrow(() -> new ApiException("Movimiento no encontrado: " + movimientoId));
+
+        // Si ya está inactivo, no tocar totales (idempotente)
+        if (mov.getEstado() != null && mov.getEstado() == 'I') {
+            var p0 = mov.getPedido();
+            return new MovimientoInactivarResponse(
+                    mov.getId(), p0.getId(), mov.getTipo(), 'I',
+                    BigDecimal.ZERO, nz(p0.getTotalPagado()), nz(p0.getTotalDescuento()), nz(p0.getTotalSaldo())
+            );
+        }
+
+        var p = mov.getPedido();
+        var totalImporte   = nz(p.getTotalImporte());
+        var totalPagado    = nz(p.getTotalPagado());
+        var totalDescuento = nz(p.getTotalDescuento());
+        var monto          = nz(mov.getMonto());
+
+        // Revertir según tipo
+        if (mov.getTipo() != null && mov.getTipo() == 2) { // PAGO -> restar de totalPagado
+            totalPagado = totalPagado.subtract(monto);
+            if (totalPagado.compareTo(BigDecimal.ZERO) < 0) totalPagado = BigDecimal.ZERO;
+            p.setTotalPagado(totalPagado);
+        } else { // DESCUENTO -> restar de totalDescuento
+            totalDescuento = totalDescuento.subtract(monto);
+            if (totalDescuento.compareTo(BigDecimal.ZERO) < 0) totalDescuento = BigDecimal.ZERO;
+            p.setTotalDescuento(totalDescuento);
+        }
+
+        // Recalcular saldo
+        var nuevoSaldo = totalImporte.subtract(totalDescuento).subtract(totalPagado);
+        if (nuevoSaldo.compareTo(BigDecimal.ZERO) < 0) nuevoSaldo = BigDecimal.ZERO;
+        p.setTotalSaldo(nuevoSaldo);
+
+        // Cambiar estado (soft delete)
+        mov.setEstado('I');
+
+        // Dirty checking guardará Pedido y Movimiento al commit
+        return new MovimientoInactivarResponse(
+                mov.getId(),
+                p.getId(),
+                mov.getTipo(),
+                'I',
+                monto,
+                p.getTotalPagado(),
+                p.getTotalDescuento(),
+                p.getTotalSaldo()
+        );
+    }
+
 
     private static BigDecimal nz(BigDecimal v) {
         return v == null ? BigDecimal.ZERO : v.setScale(2, RoundingMode.HALF_UP);

@@ -35,4 +35,11 @@ import java.util.List;
                 .body(ApiResponse.success(resp, "Movimientos creados", http));
     }
 
+    @DeleteMapping("/{movimientoId}")
+    public ResponseEntity<ApiResponse<MovimientoInactivarResponse>> inactivar(
+            @PathVariable Long movimientoId,
+            HttpServletRequest http) {
+        var resp = cobranzaMovimientoService.inactivarMovimiento(movimientoId);
+        return ResponseEntity.ok(ApiResponse.success(resp, "Movimiento inactivado (montos revertidos)", http));
+    }
 }
