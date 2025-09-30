@@ -109,7 +109,7 @@ public class PedidoServiceImpl implements PedidoService {
             boolean detalleCompleto = d.cantidad() != null
                     && d.mermaKg() != null
                     && d.opDirecta() != null
-                    && d.peso() != null
+                    && d.pesoBase() != null
                     && d.precioXKilo() != null
                     && d.tipoMerma() != null;
 
@@ -361,7 +361,7 @@ public class PedidoServiceImpl implements PedidoService {
                     d.cantidad() != null &&
                             d.mermaKg() != null &&
                             d.opDirecta() != null &&
-                            d.peso() != null &&
+                            d.pesoBase() != null &&
                             d.precioXKilo() != null &&
                             d.tipoMerma() != null;
 
