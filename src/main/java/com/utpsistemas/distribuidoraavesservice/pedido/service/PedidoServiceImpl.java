@@ -89,15 +89,19 @@ public class PedidoServiceImpl implements PedidoService {
             PedidoDetalle detalle = new PedidoDetalle();
             detalle.setPedido(pedido);
             detalle.setTipoAve(tipoAve);
-            detalle.setCantidadPollo(d.cantidad());
+            detalle.setCantidad(d.cantidad());
             detalle.setMermaKg(d.mermaKg());
             detalle.setOpDirecta(d.opDirecta());
-            detalle.setPeso(d.peso() != null ? d.peso() : BigDecimal.ZERO);
+            detalle.setPesoBase(d.pesoBase() != null ? d.pesoBase() : BigDecimal.ZERO);
+            //detalle.setPeso(d.peso() != null ? d.peso() : BigDecimal.ZERO);
             detalle.setPrecioXKilo(d.precioXKilo()  != null ? d.precioXKilo() : BigDecimal.ZERO);
             detalle.setTipoMerma(d.tipoMerma());
 
-            BigDecimal subtotal = calcularSubtotal(detalle);
-            detalle.setImporteSubTotal(subtotal);
+            detalle.setPeso(calcularPeso(detalle));
+
+            BigDecimal subtotal = (detalle.getPrecioXKilo() != null) ? detalle.getPrecioXKilo() : BigDecimal.ZERO;
+            BigDecimal importeSubTotal = detalle.getPeso().multiply(subtotal).setScale(2, RoundingMode.HALF_UP);
+            detalle.setImporteSubTotal(importeSubTotal);
 
             detalle.setEstado(1);
 
@@ -149,7 +153,7 @@ public class PedidoServiceImpl implements PedidoService {
         BigDecimal peso   = nvl(dp.getPeso());
         BigDecimal precio = nvl(dp.getPrecioXKilo());
         BigDecimal merma  = nvl(dp.getMermaKg());
-        int cantidad      = dp.getCantidadPollo() != null ? dp.getCantidadPollo() : 0;
+        int cantidad      = dp.getCantidad() != null ? dp.getCantidad() : 0;
         BigDecimal base = peso.multiply(precio);
         if (Boolean.FALSE.equals(dp.getOpDirecta())) {
             BigDecimal extra = merma.multiply(BigDecimal.valueOf(cantidad)).multiply(precio);
@@ -157,6 +161,23 @@ public class PedidoServiceImpl implements PedidoService {
         }
         return base.setScale(2, RoundingMode.HALF_UP);
     }
+
+    private BigDecimal calcularPeso(PedidoDetalle dp) {
+        BigDecimal base   = (dp.getPesoBase() != null) ? dp.getPesoBase() : BigDecimal.ZERO;
+        BigDecimal merma  = (dp.getMermaKg() != null) ? dp.getMermaKg() : BigDecimal.ZERO;
+        BigDecimal cant   = (dp.getCantidad() != null) ? new BigDecimal(dp.getCantidad()) : BigDecimal.ZERO;
+        Boolean opDirecta = dp.getOpDirecta();
+
+        if (Boolean.TRUE.equals(opDirecta)) {
+            return base; // peso = pesoBase
+        }
+
+        // Calcular merma total = mermaKg * cantidad
+        BigDecimal mermaTotal = merma.multiply(cant);
+        // peso = pesoBase + mermaTotal
+        return base.add(mermaTotal);
+    }
+
 
     private BigDecimal nvl(BigDecimal v) {
         return v != null ? v : BigDecimal.ZERO;
@@ -312,17 +333,26 @@ public class PedidoServiceImpl implements PedidoService {
 
             // Asignaciones comunes
             target.setTipoAve(tipoAve);
-            target.setCantidadPollo(d.cantidad());
-            target.setPeso(peso);
-            target.setPrecioXKilo(precio);
+            target.setCantidad(d.cantidad());
+            target.setPesoBase(d.pesoBase() != null ? d.pesoBase() : BigDecimal.ZERO);
+            //target.setPeso(peso);
+            target.setPrecioXKilo(precio  != null ? precio : BigDecimal.ZERO);
             //target.setMontoEstimado(peso.multiply(precio));
             target.setTipoMerma(d.tipoMerma());
             target.setOpDirecta(d.opDirecta());
             target.setMermaKg(d.mermaKg());
+
+            target.setPeso(calcularPeso(target));
+
+            BigDecimal subtotal = (target.getPrecioXKilo() != null) ? target.getPrecioXKilo() : BigDecimal.ZERO;
+            BigDecimal importeSubTotal = target.getPeso().multiply(subtotal).setScale(2, RoundingMode.HALF_UP);
+            target.setImporteSubTotal(importeSubTotal);
+
             target.setEstado(1);
 
-            BigDecimal subtotal = calcularSubtotal(target);
-            target.setImporteSubTotal(subtotal);
+
+
+
 
             nuevosDetalles.add(target);
 

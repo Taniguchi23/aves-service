@@ -6,6 +6,7 @@ public record DetallePedidoResponse(
         Integer tipoAveId,
         String tipoAveNombre,
         Integer cantidad,
+        BigDecimal pesoBase,
         BigDecimal peso,
         BigDecimal precioXKilo,
         BigDecimal mermaKg,

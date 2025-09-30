@@ -29,7 +29,9 @@ public class PedidoDetalle {
     @JoinColumn(name = "tipo_ave_id")
     private TipoAve tipoAve;
 
-    private Integer cantidadPollo;
+    private Integer cantidad;
+    @Column(name = "peso_base", precision = 19, scale = 2)
+    private BigDecimal pesoBase; //sin merma
     private BigDecimal peso;
     private BigDecimal precioXKilo;
     private BigDecimal montoEstimado;

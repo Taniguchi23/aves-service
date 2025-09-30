@@ -11,6 +11,7 @@ public record DetallePedidoRequest(
         Integer tipoAveId,
         @NotNull(message = "Se requiere la cantidad de ave")
         Integer cantidad,
+        BigDecimal pesoBase,
         BigDecimal peso,
         BigDecimal precioXKilo,
         @NotNull(message = "Se requiere la merma")
