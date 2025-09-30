@@ -15,7 +15,9 @@ public class MovimientoCobranzaMapper {
                 m.getCategoria() != null ? m.getCategoria().getNombre() : null,
                 m.getMonto(),
                 m.getObservacion(),
-                m.getEstado()
+                m.getEstado(),
+                m.getCreatedAt(),
+                m.getUpdatedAt()
         );
     }
 }

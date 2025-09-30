@@ -4,93 +4,94 @@
     <meta charset="UTF-8"/>
     <title>Recibos</title>
     <style>
-        /* ==== Config ticket 58mm ==== */
-        :root { --ticket-width: 68mm; } /* cambia a 80mm si usas rollo de 80 */
-        @page { size: 68mm 200mm; margin: 0; }  /* prueba 200–250mm; ajusta a gusto */
-        html, body { width: 68mm; margin: 0 auto; font-family: "Courier New", monospace; font-size: 12px; }
-
-        .line { text-align:center; margin:6px 0; font-size:10px; }
-        .line::before { content: "------------------------------------------"; white-space: pre; }
-
-        .title   { font-weight:700; text-align:center; margin: 2px 0; }
-        .subtitle{ text-align:center; margin: 0; font-size: 11px; }
-        .logo    { display:block; margin:0 auto 6px; max-width: 48mm; }
-
-        .ticket { page-break-inside: avoid; break-inside: avoid; padding: 8px; }
-        .ticket + .ticket { margin-top: 6px; }  /* separador visual */
-
-        /* Fuerza tamaño tipo ticketera (58 mm de ancho, alto “normalito”) */
-
-
-        .lr { display:flex; justify-content:space-between; gap:8px; }
-        .lr .right { text-align:right; min-width:60px; }
-
-        .muted { font-size: 11px; }
-        .bold  { font-weight: 700; }
-
-        .doc-header, .doc-footer { padding: 8px; }
-        .thanks { text-align:center; margin-top: 6px; font-size: 11px; }
+        @page { margin: 0; }
+        body { font-family: "Courier New", monospace; font-size: 12px; margin: 0; padding: 10px; }
+        .enc { text-align: center; margin-bottom: 6px; }
+        .title { font-weight: bold; }
+        .sep { text-align: center; margin: 6px 0; font-size: 10px; }
+        .sep:before { content: "------------------------------------------"; }
+        .pedido { margin-bottom: 10px; page-break-inside: avoid; }
+        .titulo { font-weight: bold; margin: 4px 0; }
+        table.lines { width: 100%; border-collapse: collapse; }
+        table.lines td { padding: 2px 0; vertical-align: top; }
+        td.right { text-align: right; width: 1%; white-space: nowrap; }
+        .totales { margin-top: 6px; }
+        .muted { font-size: 11px; text-align: center; }
     </style>
 </head>
 <body>
 
-<!-- ===== HEADER ÚNICO ===== -->
-<div class="doc-header">
-    <!-- Logo opcional -->
-    <img th:if="${logoPath}" th:src="${logoPath}" alt="logo" class="logo"/>
-    <div class="title"    th:text="${avicolaNombre}">NOMBRE DE LA AVÍCOLA</div>
-    <div class="subtitle">WHATSAPP: <span th:text="${whatsapp}">999999999</span></div>
-    <div class="line"></div>
-</div>
-<div class="lr">
-    <div>USUARIO</div>
-    <div class="right" th:text="${usuarioId}">45</div>
+<div class="enc">
+    <div class="title" th:text="${avicolaNombre}">NOMBRE DE LA AVÍCOLA</div>
+    <div>WHATSAPP: <span th:text="${whatsapp}">999999999</span></div>
+    <div>ID USUARIO: <span th:text="${usuarioId}">0</span></div>
+    <div class="sep"></div>
 </div>
 
+<!-- Mensaje si NO hay pedidos -->
+<div class="muted" th:if="${!hayPedidos}">Sin deudas para mostrar.</div>
 
-<!-- ===== TICKETS (1 por pedido) ===== -->
-<div th:each="p : ${pedidos}" class="ticket">
+<!-- Lista de pedidos -->
+<div th:each="p : ${pedidos}" class="pedido">
 
-
-    <div class="line"></div>
-
-    <div class="lr">
-        <div th:if="${#temporals}" th:text="${#temporals.format(p.fechaCreacion, 'dd/MM/yyyy')}">dd/MM/yyyy</div>
+    <div class="titulo">
+        Pedido <span th:text="${p.id}">0</span>| <span th:text="${#temporals.format(p.fechaCreacion, 'dd/MM/yyyy HH:mm')}">dd/MM/yyyy HH:mm</span>
+        <!-- &#160;|&#160; <span th:text="${p.estado != null ? p.estado.nombre : '-'}">-</span>-->
     </div>
 
     <!-- Detalles -->
-    <div th:if="${#lists.isEmpty(p.detalles)}" class="muted" style="text-align:center;">Sin detalles</div>
-    <div th:each="d : ${p.detalles}">
-        <div class="lr">
-            <div>
-                <span th:text="${d.cantidad}">3</span>
-                <span> x </span>
-                <span th:text="${#numbers.formatDecimal(d.precioXKilo,1,'POINT',2,'POINT')}">8.10</span>
-                <span> - </span>
-                <span th:text="${d.tipoAveNombre}">Pollo</span>
-                <span> (</span><span th:text="${#numbers.formatDecimal(d.peso,1,'POINT',2,'POINT')}">12.40</span><span> kg)</span>
-            </div>
-            <div class="right" th:text="${'S/ ' + #numbers.formatDecimal(d.importeSubTotal,1,'POINT',2,'POINT')}">S/ 105.30</div>
-        </div>
-    </div>
-    <!-- Totales -->
-    <div class="lr bold">
-        <div>A cuenta</div>
-        <div class="right" th:text="${'S/ ' + #numbers.formatDecimal((p.totalPagado),1,'POINT',2,'POINT')}">S/ 0.00</div>
-    </div>
-    <div class="lr bold">
-        <div>Total Saldo</div>
-        <div class="right" th:text="${'S/ ' + #numbers.formatDecimal(p.totalSaldo,1,'POINT',2,'POINT')}">S/ 0.00</div>
-    </div>
+    <table class="lines" th:if="${p.detalles != null and !#lists.isEmpty(p.detalles)}">
+        <tbody>
 
+        <tr th:each="d : ${p.detalles}">
+            <td>
+                (<span th:text="${d.cantidad}">0</span>)
+                <span th:text="${d.tipoAveNombre}">Producto</span>
+                (S/ <span th:text="${#numbers.formatDecimal(d.precioXKilo,1,'POINT',2,'POINT')}">0.00</span>)
+                x <span th:text="${#numbers.formatDecimal(d.peso,1,'POINT',2,'POINT')}">0.00</span> kg
+            </td>
+            <td class="right" th:text="${'S/ ' + #numbers.formatDecimal(d.importeSubTotal,1,'POINT',2,'POINT')}">S/ 0.00</td>
+        </tr>
+        </tbody>
+    </table>
 
+    <!-- Totales del pedido (A cuenta = pagos + desc.) -->
+    <!--<div class="totales">
+        <table class="lines">
+            <tbody>
+            <tr>
+                <td>A cuenta</td>
+                <td class="right"
+                    th:text="${'S/ ' + #numbers.formatDecimal((p.totalPagado?:T(java.math.BigDecimal).ZERO).add(p.totalDescuento?:T(java.math.BigDecimal).ZERO),1,'POINT',2,'POINT')}">
+                    S/ 0.00
+                </td>
+            </tr>
+            <tr>
+                <td>Saldo</td>
+                <td class="right"
+                    th:text="${'S/ ' + #numbers.formatDecimal(p.totalSaldo?:T(java.math.BigDecimal).ZERO,1,'POINT',2,'POINT')}">
+                    S/ 0.00
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div> -->
 </div>
 
-<!-- ===== FOOTER ÚNICO ===== -->
-<div class="doc-footer">
-    <div class="line"></div>
-    <div class="thanks">¡Gracias por su preferencia!</div>
-</div>
+<!-- Pie con totales globales (vienen por setVariable) -->
+<div class="sep" th:if="${hayPedidos}"></div>
+<table class="lines" th:if="${hayPedidos}">
+    <tbody>
+    <tr>
+        <td class="title">TOTAL A CUENTA</td>
+        <td class="right title" th:text="${'S/ ' + #numbers.formatDecimal(totalACuentaAll,1,'POINT',2,'POINT')}">S/ 0.00</td>
+    </tr>
+    <tr>
+        <td class="title">TOTAL SALDO</td>
+        <td class="right title" th:text="${'S/ ' + #numbers.formatDecimal(totalSaldoAll,1,'POINT',2,'POINT')}">S/ 0.00</td>
+    </tr>
+    </tbody>
+</table>
 
 </body>
 </html>

@@ -7,6 +7,7 @@ import com.utpsistemas.distribuidoraavesservice.cobranza.entity.FormaPago;
 import com.utpsistemas.distribuidoraavesservice.cobranza.entity.TipoPago;
 import com.utpsistemas.distribuidoraavesservice.cobranza.service.CobranzaService;
 import com.utpsistemas.distribuidoraavesservice.cobranza.service.PagoService;
+import com.utpsistemas.distribuidoraavesservice.pedido.dto.PedidoResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -20,6 +21,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
 
@@ -100,11 +102,29 @@ import java.util.Locale;
 
     private final SpringTemplateEngine templateEngine;
 
-    @GetMapping(value = "/pedidos/usuario/{usuarioId}/recibos.pdf", produces = "application/pdf")
+    @GetMapping(value = "impresion/usuario/{usuarioId}/cliente/{clienteId}/recibos.pdf", produces = "application/pdf")
     public void descargarRecibosPdf(@PathVariable Long usuarioId,
+                                    @PathVariable Long clienteId,
                                     HttpServletResponse response) throws Exception {
 
-        var pedidos = cobranzaService.listarCobranzaPorUsuario(usuarioId);
+        var pedidos = cobranzaService.listarCobranzaPorUsuarioAndCliente(usuarioId, clienteId);
+
+        // ---- Totales globales (null-safe) ----
+        java.math.BigDecimal ZERO = java.math.BigDecimal.ZERO;
+
+        java.util.function.Function<java.math.BigDecimal, java.math.BigDecimal> nz = v -> v != null ? v : ZERO;
+
+        java.math.BigDecimal totalImporteAll = pedidos.stream()
+                .map(p -> nz.apply(p.totalImporte()))
+                .reduce(ZERO, java.math.BigDecimal::add);
+
+        java.math.BigDecimal totalACuentaAll = pedidos.stream()
+                .map(p -> nz.apply(p.totalPagado()).add(nz.apply(p.totalDescuento())))
+                .reduce(ZERO, java.math.BigDecimal::add);
+
+        java.math.BigDecimal totalSaldoAll = pedidos.stream()
+                .map(p -> nz.apply(p.totalSaldo()))
+                .reduce(ZERO, java.math.BigDecimal::add);
 
         var ctx = new org.thymeleaf.context.Context(new java.util.Locale("es","PE"));
         ctx.setVariable("usuarioId", usuarioId);
@@ -112,6 +132,12 @@ import java.util.Locale;
         ctx.setVariable("avicolaNombre", "NOMBRE DE LA AVÍCOLA");
         ctx.setVariable("whatsapp", "999999999");
         // ctx.setVariable("logoPath", "/images/logo.png");
+
+        // Totales globales para el pie
+        ctx.setVariable("totalImporteAll", totalImporteAll);
+        ctx.setVariable("totalACuentaAll", totalACuentaAll);
+        ctx.setVariable("totalSaldoAll", totalSaldoAll);
+        ctx.setVariable("hayPedidos", !pedidos.isEmpty());
 
         String html = templateEngine.process("recibos-ticket", ctx);
 
@@ -125,12 +151,11 @@ import java.util.Locale;
             var builder = new com.openhtmltopdf.pdfboxout.PdfRendererBuilder();
             builder.useFastMode();
             builder.withHtmlContent(html, baseUrl);
+            // Tamaño: 68mm x 220mm (ajusta el alto si se corta)
             builder.useDefaultPageSize(68, 220, com.openhtmltopdf.pdfboxout.PdfRendererBuilder.PageSizeUnits.MM);
-
             builder.toStream(os);
             builder.run();
         }
     }
-
 
 }
